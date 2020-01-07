@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package io.zealab.kvaft.rpc.protoc;
+
+option java_package = "io.zealab.kvaft.rpc.protoc";
+option java_outer_classname = "RemoteCalls";
+
+message Heartbeat {
+    int64 timestamp = 1;
+}
+
+message PreVoteRequest {
+
+}
+
+message PreVoteAck {
+
+}
