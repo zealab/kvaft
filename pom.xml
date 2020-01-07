@@ -17,6 +17,7 @@
         <apache.common.io.version>2.6</apache.common.io.version>
         <apache.lang3.version>3.9</apache.lang3.version>
         <netty.version>4.1.44.Final</netty.version>
+        <slf4j.version>1.7.28</slf4j.version>
     </properties>
 
     <dependencyManagement>
@@ -41,6 +42,11 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
                 <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
