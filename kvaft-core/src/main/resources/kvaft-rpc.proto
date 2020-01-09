@@ -9,10 +9,13 @@ message Heartbeat {
     int64 timestamp = 1;
 }
 
-message PreVoteRequest {
-
+message PreVoteReq {
+    string server_id = 1;
+    string peer_id = 2;
+    uint64 term = 3;
 }
 
 message PreVoteAck {
-
+    uint64 term = 1;
+    bool authorized = 2;
 }

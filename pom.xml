@@ -18,6 +18,9 @@
         <apache.lang3.version>3.9</apache.lang3.version>
         <netty.version>4.1.44.Final</netty.version>
         <slf4j.version>1.7.28</slf4j.version>
+        <protobuf.version>3.11.1</protobuf.version>
+        <junit.version>4.13</junit.version>
+        <apache.codec.version>1.13</apache.codec.version>
     </properties>
 
     <dependencyManagement>
@@ -47,6 +50,22 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${apache.codec.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

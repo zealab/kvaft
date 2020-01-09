@@ -9,6 +9,8 @@ public interface ChannelProcessor<T> {
 
     /**
      * process message
+     *
+     * @param msg message entity
      */
     void doProcess(Message<T> msg);
 }
