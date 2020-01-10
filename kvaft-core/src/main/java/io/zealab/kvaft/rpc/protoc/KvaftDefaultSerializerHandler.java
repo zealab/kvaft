@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * Kvaft Serializer
  * <p>
  * -----------------------------------------------
- * |  node(32) | dataSize(32) | request id(64)   |
+ * |  dataSize(32) | node(32) | request id(64)   |
  * -----------------------------------------------
  * |  from ip(32) | from port(16) | to ip(32)    |
  * -----------------------------------------------
