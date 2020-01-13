@@ -1,4 +1,8 @@
-package io.zealab.kvaft.rpc.protoc;
+package io.zealab.kvaft.rpc.protoc.codec;
+
+import io.zealab.kvaft.rpc.protoc.KvaftMessage;
+
+import java.nio.ByteBuffer;
 
 /**
  * @author LeonWong
@@ -12,5 +16,5 @@ public interface Encoder {
      *
      * @return binary data
      */
-    byte[] encode(KvaftMessage<?> kvaftMessage);
+    ByteBuffer encode(KvaftMessage<?> kvaftMessage);
 }

@@ -4,6 +4,8 @@ import com.google.protobuf.Message;
 import io.zealab.kvaft.core.Peer;
 import io.zealab.kvaft.rpc.ChannelProcessor;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
+import io.zealab.kvaft.util.Assert;
+import io.zealab.kvaft.util.Endpoint;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,7 +30,10 @@ public abstract class AbstractProcessor<T extends Message> implements ChannelPro
      */
     public void doProcess(KvaftMessage<T> msg) {
         checkMsg(msg);
-        doProcess0(Peer.builder().nodeId(msg.node()).endpoint(msg.from()).build(), msg.payload());
+        String[] from = msg.from().split(":");
+        Assert.state(from.length == 2, "'from' field is illegal");
+        Endpoint endpoint = Endpoint.builder().ip(from[0]).port(Integer.parseInt(from[1])).build();
+        doProcess0(Peer.builder().nodeId(msg.node()).endpoint(endpoint).build(), msg.payload());
     }
 
     private void checkMsg(KvaftMessage<T> msg) {

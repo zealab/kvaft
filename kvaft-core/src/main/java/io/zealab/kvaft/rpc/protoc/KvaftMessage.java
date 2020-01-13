@@ -1,60 +1,70 @@
 package io.zealab.kvaft.rpc.protoc;
 
 import com.google.protobuf.Message;
+import lombok.Builder;
+import lombok.ToString;
 
 /**
  * Messages between nodes
  *
  * @author LeonWong
  */
-public interface KvaftMessage<T extends Message> {
+@Builder
+@ToString
+public class KvaftMessage<T extends Message> {
+
+    private int node;
+
+    private long requestId;
+
+    private String from;
+
+    private T payload;
+
+    private int checksum;
 
     /**
      * node id
      *
-     * @return
+     * @return node
      */
-    int node();
+    public int node() {
+        return node;
+    }
 
     /**
      * request id from client
      *
      * @return request id
      */
-    long requestId();
+    public long requestId() {
+        return requestId;
+    }
 
     /**
      * msg from whom
      *
      * @return sender
      */
-    String from();
-
-    /**
-     * who to send
-     *
-     * @return
-     */
-    String to();
+    public String from() {
+        return from;
+    }
 
     /**
      * generic payload
      *
      * @return payload
      */
-    T payload();
+    public T payload() {
+        return payload;
+    }
 
     /**
-     * checksum
+     * checksum crc32
      *
-     * @return checksum
+     * @return crc32 value
      */
-    long checksum();
-
-    /**
-     * message data size
-     *
-     * @return
-     */
-    int dataSize();
+    public int checksum() {
+        return checksum;
+    }
 }
