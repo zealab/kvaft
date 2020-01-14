@@ -6,6 +6,7 @@ import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.rpc.protoc.ProtocHandleManager;
 import io.zealab.kvaft.util.Assert;
 import io.zealab.kvaft.util.CrcUtil;
+import io.zealab.kvaft.util.IpAddressUtil;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -46,7 +47,7 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
         return SingletonHolder.instance;
     }
 
-    private static ProtocHandleManager handleManager = new ProtocHandleManager();
+    private static ProtocHandleManager handleManager = ProtocHandleManager.getInstance();
 
     @Override
     public List<KvaftMessage<?>> decode(ByteBuffer data) {
@@ -62,28 +63,28 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
             }
             int node = data.getInt();
             long requestId = data.getLong();
-            int fromIp = data.getInt();
+            byte[] fromIp = getBytes(data, 4);
             int fromPort = data.getShort();
             int clazzLength = data.getInt();
-            byte[] clazzMeta = new byte[clazzLength];
-            data.get(clazzMeta);
+            byte[] clazzMeta = getBytes(data, clazzLength);
+
             int payloadSize = dataSize - clazzLength - getFixHeaderLength();
             Assert.state(payloadSize > 0, "invalid message , cause payload size is illegal");
-            byte[] payload = new byte[payloadSize];
-            data.get(payload);
-            int checksum = data.getInt();
+            byte[] payload = getBytes(data, payloadSize);
+
+            // crc32 validation
+            checkSum(data, dataSize);
             String clazzName = new String(clazzMeta, UTF_8);
             Message message;
             try {
                 MethodHandle handle = handleManager.getHandle(clazzName);
                 if (Objects.nonNull(handle)) {
-                    message = (Message) handle.invokeExact(payload);
-                    result.add(
-                            KvaftMessage.builder().checksum(checksum).from(String.format("%s:%d", fromIp, fromPort))
-                                    .node(node)
-                                    .requestId(requestId)
-                                    .payload(message).build()
-                    );
+                    message = (Message) handle.invokeWithArguments(payload);
+                    KvaftMessage<?> kvaftMessage = KvaftMessage.builder().from(String.format("%s:%d", IpAddressUtil.bytesToIpAddress(fromIp), fromPort))
+                            .node(node)
+                            .requestId(requestId)
+                            .payload(message).build();
+                    result.add(kvaftMessage);
                 }
             } catch (Throwable e) {
                 log.error("KvaftMessage decode reflection error", e);
@@ -114,7 +115,7 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
 
     private void checkHeaderBound(ByteBuffer data) {
         if (data.capacity() < getFixHeaderLength()) {
-            throw new IllegalStateException("checkHeaderBound failed");
+            throw new IllegalStateException("checking protocol head is bounded, but failed");
         }
     }
 
@@ -128,4 +129,41 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
     }
 
 
+    private boolean checkSum(ByteBuffer data, int dataSize) {
+        // crc32 validation
+        int pos = data.position();
+        data.reset();
+        byte[] srcData = new byte[dataSize - 4];
+        data.get(srcData);
+        data.position(pos);
+        int checksum = data.getInt();
+        return checkSum(srcData, checksum);
+    }
+
+    /**
+     * crc32 check
+     *
+     * @param data  src data
+     * @param crc32 remainder
+     *
+     * @return check result
+     */
+    private boolean checkSum(byte[] data, int crc32) {
+        int value = CrcUtil.crc32(data);
+        return crc32 == value;
+    }
+
+    /**
+     * byte buffer get bytes
+     *
+     * @param data
+     * @param size
+     *
+     * @return
+     */
+    private byte[] getBytes(ByteBuffer data, int size) {
+        byte[] result = new byte[size];
+        data.get(result);
+        return result;
+    }
 }

@@ -35,7 +35,7 @@ public class NettyServer implements Initializer {
 
     private final ServerBootstrap bootstrap = new ServerBootstrap();
 
-    private final static ChannelProcessorManager processManager = new ChannelProcessorManager();
+    private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
 
     public NettyServer(int port) {
         this.port = port;

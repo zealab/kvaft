@@ -5,7 +5,15 @@ import lombok.Builder;
 import lombok.ToString;
 
 /**
- * Messages between nodes
+ * communication message entity
+ * <p>
+ * -----------------------------------------------
+ * |  dataSize(32) | node(32) | request id(64)   |
+ * -----------------------------------------------
+ * |from ip(32)| from port(16)| clazz length(32) |
+ * -----------------------------------------------
+ * |  clazz meta  | pb  payload | checksum(32)   |
+ * -----------------------------------------------
  *
  * @author LeonWong
  */
@@ -20,8 +28,6 @@ public class KvaftMessage<T extends Message> {
     private String from;
 
     private T payload;
-
-    private int checksum;
 
     /**
      * node id
@@ -57,14 +63,5 @@ public class KvaftMessage<T extends Message> {
      */
     public T payload() {
         return payload;
-    }
-
-    /**
-     * checksum crc32
-     *
-     * @return crc32 value
-     */
-    public int checksum() {
-        return checksum;
     }
 }
