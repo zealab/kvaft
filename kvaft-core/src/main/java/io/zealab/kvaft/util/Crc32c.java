@@ -9,6 +9,20 @@ import java.util.zip.Checksum;
  */
 public final class Crc32c implements Checksum {
 
+    private static final ThreadLocal<Crc32c> CRC_32_THREAD_LOCAL = ThreadLocal.withInitial(Crc32c::new);
+
+    public static int crc32(byte[] data) {
+        Crc32c crc32 = CRC_32_THREAD_LOCAL.get();
+        crc32.update(data, 0, data.length);
+        byte[] crc32Bytes = crc32.getValueAsBytes();
+        int value = (crc32Bytes[0] & 0xff) << 24
+                | (crc32Bytes[1] & 0xff) << 16
+                | (crc32Bytes[2] & 0xff) << 8
+                | (crc32Bytes[3] & 0xff);
+        crc32.reset();
+        return value;
+    }
+
     private static final long[] CRC_TABLE = {
             0x00000000, 0xf26b8303, 0xe13b70f7, 0x1350f3f4,
             0xc79a971f, 0x35f1141c, 0x26a1e7e8, 0xd4ca64eb,

@@ -5,7 +5,7 @@ import com.google.protobuf.Message;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.rpc.protoc.ProtocHandleManager;
 import io.zealab.kvaft.util.Assert;
-import io.zealab.kvaft.util.CrcUtil;
+import io.zealab.kvaft.util.Crc32c;
 import io.zealab.kvaft.util.IpAddressUtil;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -73,21 +73,22 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
             byte[] payload = getBytes(data, payloadSize);
 
             // crc32 validation
-            checkSum(data, dataSize);
-            String clazzName = new String(clazzMeta, UTF_8);
-            Message message;
-            try {
-                MethodHandle handle = handleManager.getHandle(clazzName);
-                if (Objects.nonNull(handle)) {
-                    message = (Message) handle.invokeWithArguments(payload);
-                    KvaftMessage<?> kvaftMessage = KvaftMessage.builder().from(String.format("%s:%d", IpAddressUtil.bytesToIpAddress(fromIp), fromPort))
-                            .node(node)
-                            .requestId(requestId)
-                            .payload(message).build();
-                    result.add(kvaftMessage);
+            boolean isValid = checkSum(data, dataSize);
+            if (isValid) {
+                try {
+                    String clazzName = new String(clazzMeta, UTF_8);
+                    MethodHandle handle = handleManager.getHandle(clazzName);
+                    if (Objects.nonNull(handle)) {
+                        Message message = (Message) handle.invokeWithArguments(payload);
+                        KvaftMessage<?> kvaftMessage = KvaftMessage.builder().from(String.format("%s:%d", IpAddressUtil.bytesToIpAddress(fromIp), fromPort))
+                                .node(node)
+                                .requestId(requestId)
+                                .payload(message).build();
+                        result.add(kvaftMessage);
+                    }
+                } catch (Throwable e) {
+                    log.error("KvaftMessage decode reflection error", e);
                 }
-            } catch (Throwable e) {
-                log.error("KvaftMessage decode reflection error", e);
             }
         }
         return result;
@@ -109,7 +110,11 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
         encoded.putInt(clazzMeta.length);
         encoded.put(clazzMeta);
         encoded.put(payload.toByteArray());
-        encoded.putInt(CrcUtil.crc32(encoded.array()));
+        encoded.flip();
+        int crc = Crc32c.crc32(getBytes(encoded, dataSize - 4));
+        encoded.limit(dataSize);
+        encoded.position(dataSize - 4);
+        encoded.putInt(crc);
         return encoded;
     }
 
@@ -149,7 +154,7 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
      * @return check result
      */
     private boolean checkSum(byte[] data, int crc32) {
-        int value = CrcUtil.crc32(data);
+        int value = Crc32c.crc32(data);
         return crc32 == value;
     }
 
@@ -163,7 +168,7 @@ public class KvaftProtocolSerializer implements Decoder, Encoder {
      */
     private byte[] getBytes(ByteBuffer data, int size) {
         byte[] result = new byte[size];
-        data.get(result);
+        data.get(result, 0, size);
         return result;
     }
 }

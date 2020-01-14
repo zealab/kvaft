@@ -1,4 +1,4 @@
-package io.zealab.kvaft.util;
+package io.zealab.kvaft.core;
 
 import lombok.Builder;
 import lombok.Data;

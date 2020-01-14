@@ -1,5 +1,6 @@
 package io.zealab.kvaft.util;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ThreadFactory;
@@ -27,7 +28,7 @@ public class NamedThreadFactory implements ThreadFactory {
     }
 
     @Override
-    public Thread newThread(Runnable r) {
+    public Thread newThread(@NonNull Runnable r) {
         Thread t = new Thread(r);
         t.setDaemon(this.daemon);
         t.setUncaughtExceptionHandler(UNCAUGHT_EX_HANDLER);

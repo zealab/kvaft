@@ -5,7 +5,7 @@ import io.zealab.kvaft.core.Peer;
 import io.zealab.kvaft.rpc.ChannelProcessor;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.util.Assert;
-import io.zealab.kvaft.util.Endpoint;
+import io.zealab.kvaft.core.Endpoint;
 import lombok.extern.slf4j.Slf4j;
 
 /**
