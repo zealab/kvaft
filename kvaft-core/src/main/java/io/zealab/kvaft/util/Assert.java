@@ -10,4 +10,10 @@ public class Assert {
             throw new IllegalStateException(message);
         }
     }
+
+    public static void notNull(Object obj, String message) {
+        if (obj == null) {
+            throw new IllegalStateException(message);
+        }
+    }
 }

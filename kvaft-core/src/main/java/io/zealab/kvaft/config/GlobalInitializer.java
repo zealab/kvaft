@@ -28,6 +28,7 @@ public class GlobalInitializer implements Initializer {
 
     @Override
     public void init() {
+        // scanning packages and loading class
         scanPackage();
     }
 

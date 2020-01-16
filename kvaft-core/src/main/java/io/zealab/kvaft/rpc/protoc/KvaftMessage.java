@@ -8,9 +8,9 @@ import lombok.ToString;
  * communication message entity
  * <p>
  * -----------------------------------------------
- * |  dataSize(32) | node(32) | request id(64)   |
+ * |  magic code(32) |      dataSize(32)         |
  * -----------------------------------------------
- * |from ip(32)| from port(16)| clazz length(32) |
+ * |    request id(64)   | clazz length(32)      |
  * -----------------------------------------------
  * |  clazz meta  | pb  payload | checksum(32)   |
  * -----------------------------------------------
@@ -21,22 +21,9 @@ import lombok.ToString;
 @ToString
 public class KvaftMessage<T extends Message> {
 
-    private int node;
-
     private long requestId;
 
-    private String from;
-
     private T payload;
-
-    /**
-     * node id
-     *
-     * @return node
-     */
-    public int node() {
-        return node;
-    }
 
     /**
      * request id from client
@@ -45,15 +32,6 @@ public class KvaftMessage<T extends Message> {
      */
     public long requestId() {
         return requestId;
-    }
-
-    /**
-     * msg from whom
-     *
-     * @return sender
-     */
-    public String from() {
-        return from;
     }
 
     /**

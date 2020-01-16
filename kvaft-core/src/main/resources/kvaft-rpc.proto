@@ -10,8 +10,6 @@ message Heartbeat {
 }
 
 message PreVoteReq {
-    string server_id = 1;
-    string peer_id = 2;
     uint64 term = 3;
 }
 

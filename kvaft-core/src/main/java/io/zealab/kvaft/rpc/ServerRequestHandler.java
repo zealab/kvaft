@@ -4,18 +4,16 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-import java.util.Map;
-
 /**
  * @author LeonWong
  */
 @ChannelHandler.Sharable
 public class ServerRequestHandler extends ChannelInboundHandlerAdapter {
 
-    private final Map<String, ChannelProcessor<?>> processors;
+    private final ChannelProcessorManager cpm;
 
-    public ServerRequestHandler(Map<String, ChannelProcessor<?>> processors) {
-        this.processors = processors;
+    public ServerRequestHandler(ChannelProcessorManager cpm) {
+        this.cpm = cpm;
     }
 
     @Override

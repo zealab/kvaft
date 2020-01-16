@@ -1,6 +1,7 @@
 package io.zealab.kvaft.rpc;
 
 import com.google.protobuf.Message;
+import io.netty.channel.Channel;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 
 /**
@@ -15,5 +16,5 @@ public interface ChannelProcessor<T extends Message> {
      *
      * @param msg message entity
      */
-    void doProcess(KvaftMessage<T> msg);
+    void doProcess(KvaftMessage<T> msg, Channel channel);
 }

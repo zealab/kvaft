@@ -6,11 +6,10 @@ import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.flush.FlushConsolidationHandler;
 import io.zealab.kvaft.core.Initializer;
-import io.zealab.kvaft.rpc.protoc.codec.KvaftDefaultCodec;
+import io.zealab.kvaft.rpc.protoc.codec.KvaftDefaultCodecHandler;
 import io.zealab.kvaft.util.NamedThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -25,7 +24,7 @@ import static io.zealab.kvaft.util.NettyUtil.newEventLoopGroup;
 @Slf4j
 public class NettyServer implements Initializer {
 
-    private ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("netty-boot-thread-%d", true));
+    private final ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("netty-boot-thread-%d", true));
 
     private final EventLoopGroup bossGroup = newEventLoopGroup(1, "boss-loop-group-%d");
 
@@ -53,11 +52,11 @@ public class NettyServer implements Initializer {
                 new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-                        Map<String, ChannelProcessor<?>> processors = processManager.getRegistry();
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast("flushConsolidationHandler", new FlushConsolidationHandler(1024, true));
-                        pipeline.addLast("codec", new KvaftDefaultCodec());
-                        pipeline.addLast("serverRequestHandler", new ServerRequestHandler(processors));
+                        pipeline.addLast("codec", new KvaftDefaultCodecHandler());
+                        pipeline.addLast("connectionHandler", new ConnectionHandler(processManager));
+                        pipeline.addLast("serverRequestHandler", new ServerRequestHandler(processManager));
                     }
                 }
         );
@@ -65,10 +64,8 @@ public class NettyServer implements Initializer {
 
     /**
      * do start netty server
-     *
-     * @throws InterruptedException
      */
-    public void start() throws InterruptedException {
+    public void start() {
         executorService.execute(
                 () -> {
                     try {
@@ -82,6 +79,5 @@ public class NettyServer implements Initializer {
                     }
                 }
         );
-
     }
 }

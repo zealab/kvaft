@@ -1,11 +1,12 @@
 package io.zealab.kvaft.rpc.impl;
 
 import com.google.protobuf.Message;
+import io.netty.channel.Channel;
 import io.zealab.kvaft.core.Peer;
 import io.zealab.kvaft.rpc.ChannelProcessor;
+import io.zealab.kvaft.rpc.ChannelProcessorManager;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.util.Assert;
-import io.zealab.kvaft.core.Endpoint;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -15,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public abstract class AbstractProcessor<T extends Message> implements ChannelProcessor<T> {
+
+    protected final static ChannelProcessorManager cpm = ChannelProcessorManager.getInstance();
 
     /**
      * handle payload
@@ -28,15 +31,14 @@ public abstract class AbstractProcessor<T extends Message> implements ChannelPro
      *
      * @param msg message entity
      */
-    public void doProcess(KvaftMessage<T> msg) {
+    public void doProcess(KvaftMessage<T> msg, Channel channel) {
         checkMsg(msg);
-        String[] from = msg.from().split(":");
-        Assert.state(from.length == 2, "'from' field is illegal");
-        Endpoint endpoint = Endpoint.builder().ip(from[0]).port(Integer.parseInt(from[1])).build();
-        doProcess0(Peer.builder().nodeId(msg.node()).endpoint(endpoint).build(), msg.payload());
+        Peer peer = Peer.from(channel);
+        Assert.notNull(peer, "peer could not be null");
+        doProcess0(peer, msg.payload());
     }
 
     private void checkMsg(KvaftMessage<T> msg) {
-        // TODO verify request id & checksum & nodeid
+        // TODO verify request id & nodeid
     }
 }
