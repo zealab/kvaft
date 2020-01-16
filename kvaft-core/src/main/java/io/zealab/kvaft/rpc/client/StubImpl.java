@@ -7,6 +7,7 @@ import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 
 public class StubImpl implements Stub {
 
+
     @Override
     public void heartbeat(Replicator replicator) {
 
@@ -19,6 +20,6 @@ public class StubImpl implements Stub {
                 .payload(preVoteReq)
                 .requestId(System.currentTimeMillis())
                 .build();
-
+        return null;
     }
 }

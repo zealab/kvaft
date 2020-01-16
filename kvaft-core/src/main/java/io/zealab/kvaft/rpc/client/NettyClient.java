@@ -1,12 +1,12 @@
 package io.zealab.kvaft.rpc.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
+import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Initializer;
+import io.zealab.kvaft.core.Replicator;
+import io.zealab.kvaft.util.IpAddressUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.zealab.kvaft.util.NettyUtil.getClientSocketChannelClass;
@@ -47,11 +47,26 @@ public class NettyClient implements Initializer {
 
     }
 
+    /**
+     * connect to the endpoint and create a channel
+     *
+     * @param host host
+     * @param port port
+     *
+     * @return is successful?
+     *
+     * @throws InterruptedException
+     */
     public boolean connect(String host, int port) throws InterruptedException {
         ChannelFuture future = bootstrap.connect(host, port).sync();
         if (future.isSuccess()) {
             log.info("connect to host={},port={} successfully.", host, port);
-            rm.addActiveReplicators();
+            Channel channel = future.channel();
+            String address = IpAddressUtil.convertChannelRemoteAddress(channel);
+            String[] array = address.split(",");
+            Endpoint endpoint = Endpoint.builder().ip(array[0]).port(Integer.parseInt(array[1])).build();
+            Replicator replicator = Replicator.builder().channel(future.channel()).endpoint(endpoint).build();
+            rm.addActiveReplicators(replicator);
             return true;
         } else {
             log.warn("connect to host={},port={} failed.", host, port);
