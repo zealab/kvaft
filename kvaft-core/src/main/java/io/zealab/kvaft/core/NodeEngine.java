@@ -16,7 +16,6 @@ public class NodeEngine implements Node {
     private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
 
     @Override
-
     public boolean isLeader() {
         return false;
     }

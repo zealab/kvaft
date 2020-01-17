@@ -10,7 +10,7 @@ import io.zealab.kvaft.rpc.protoc.codec.KvaftDefaultCodecHandler;
 import io.zealab.kvaft.util.NamedThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static io.netty.channel.ChannelOption.SO_BACKLOG;
@@ -22,9 +22,9 @@ import static io.zealab.kvaft.util.NettyUtil.newEventLoopGroup;
  * @author LeonWong
  */
 @Slf4j
-public class NettyServer implements Initializer {
+public class NioServer implements Initializer {
 
-    private final ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("netty-boot-thread-%d", true));
+    private final ExecutorService executorService = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("netty-boot-thread-%d", true));
 
     private final EventLoopGroup bossGroup = newEventLoopGroup(1, "boss-loop-group-%d");
 
@@ -36,7 +36,7 @@ public class NettyServer implements Initializer {
 
     private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
 
-    public NettyServer(int port) {
+    public NioServer(int port) {
         this.port = port;
     }
 
@@ -72,7 +72,7 @@ public class NettyServer implements Initializer {
                         log.info("netty server starting...");
                         ChannelFuture future = bootstrap.bind(port).sync();
                         if (future.isSuccess()) {
-                            log.info("netty server started ip={},port={}", "127.0.0.1", port);
+                            log.info("netty server started ip={},port={}", "0.0.0.0", port);
                         }
                     } catch (InterruptedException e) {
                         log.error("do start netty server...");

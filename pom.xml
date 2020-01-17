@@ -11,6 +11,7 @@
     <modules>
         <module>kvaft-core</module>
         <module>kvaft-server</module>
+        <module>kvaft-example</module>
     </modules>
 
     <properties>

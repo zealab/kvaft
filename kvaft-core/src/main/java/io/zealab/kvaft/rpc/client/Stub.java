@@ -1,12 +1,21 @@
 package io.zealab.kvaft.rpc.client;
 
 import io.zealab.kvaft.core.Endpoint;
-import io.zealab.kvaft.core.Replicator;
-import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 
 public interface Stub {
 
-    void heartbeat(Replicator replicator);
+    /**
+     * Heartbeat call
+     *
+     * @param endpoint toWhere
+     */
+    void heartbeat(Endpoint endpoint);
 
-    RemoteCalls.PreVoteAck preVoteReq(Endpoint endpoint, long term);
+    /**
+     * pre vote req
+     *
+     * @param endpoint toWhere
+     * @param term     currTerm
+     */
+    void preVoteReq(Endpoint endpoint, long term);
 }
