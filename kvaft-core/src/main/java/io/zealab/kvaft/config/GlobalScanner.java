@@ -11,12 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 
 /**
- * global initializer
+ * global scanner
  *
  * @author LeonWong
  */
 @Slf4j
-public class GlobalInitializer implements Initializer {
+public class GlobalScanner implements Initializer {
 
     private final static ImmutableSet<? extends Scanner> SCANNERS = ImmutableSet.of(
             ProtocHandleManager.getInstance(), ChannelProcessorManager.getInstance()
@@ -24,14 +24,13 @@ public class GlobalInitializer implements Initializer {
 
     private final static String GLOBAL_SCAN = "io.zealab.kvaft";
 
-    private final static ClassLoader cl = GlobalInitializer.class.getClassLoader();
+    private final static ClassLoader cl = GlobalScanner.class.getClassLoader();
 
     @Override
     public void init() {
         // scanning packages and loading class
         scanPackage();
     }
-
 
     private void scanPackage() {
         try {

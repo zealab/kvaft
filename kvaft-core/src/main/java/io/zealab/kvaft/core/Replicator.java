@@ -54,6 +54,9 @@ public class Replicator {
         this.heartbeatTimer = TimerManager.scheduleWithFixRate(new HeartbeatTask(), 10, 10, TimeUnit.SECONDS);
     }
 
+    /**
+     * heartbeat timer task
+     */
     public class HeartbeatTask implements Runnable {
 
         @Override

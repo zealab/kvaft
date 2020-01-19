@@ -1,6 +1,5 @@
 package io.zealab.kvaft.rpc.client;
 
-import io.netty.channel.Channel;
 import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.RequestId;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
@@ -22,9 +21,7 @@ public class StubImpl implements Stub {
                 .requestId(requestId.getValue())
                 .payload(heartbeat)
                 .build();
-        Channel channel = client.getConnection(1000);
-        Assert.notNull(channel, "channel connection failed");
-        client.invokeOneWay(channel, req, 1000);
+        client.invokeOneWay(req, 1000, 1000);
     }
 
     @Override
@@ -37,8 +34,6 @@ public class StubImpl implements Stub {
                 .payload(preVoteReq)
                 .requestId(requestId.getValue())
                 .build();
-        Channel channel = client.getConnection(1000);
-        Assert.notNull(channel, "channel connection failed");
-        client.invokeOneWay(channel, req, 5000);
+        client.invokeOneWay(req, 1000, 1000);
     }
 }

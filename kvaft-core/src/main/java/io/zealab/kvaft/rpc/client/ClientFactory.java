@@ -1,6 +1,5 @@
 package io.zealab.kvaft.rpc.client;
 
-import io.netty.channel.Channel;
 import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Replicator;
 import lombok.NonNull;
@@ -40,8 +39,8 @@ public class ClientFactory {
                 }
                 Client client = new Client(endpoint);
                 client.init();
-                Channel channel = client.connect(5000);
-                return null != channel ? client : null;
+                replicatorManager.registerReplicator(endpoint, client);
+                return client;
             }
         } catch (Exception e) {
             log.error("create client failed, please check endpoint config", e);

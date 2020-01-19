@@ -1,7 +1,7 @@
 package io.zealab.kvaft.protocal;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.zealab.kvaft.config.GlobalInitializer;
+import io.zealab.kvaft.config.GlobalScanner;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat;
 import io.zealab.kvaft.rpc.protoc.codec.CodecFactory;
@@ -27,7 +27,7 @@ public class ProtoBufTest {
 
     @Test
     public void serializer() {
-        GlobalInitializer initializer = new GlobalInitializer();
+        GlobalScanner initializer = new GlobalScanner();
         initializer.init();
         Heartbeat hb = Heartbeat.newBuilder().setTimestamp(150L).build();
         KvaftMessage<Heartbeat> message = KvaftMessage.<Heartbeat>builder().payload(hb).requestId(201920391203L).build();

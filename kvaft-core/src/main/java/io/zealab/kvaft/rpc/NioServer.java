@@ -45,21 +45,21 @@ public class NioServer implements Initializer {
         bootstrap.group(bossGroup, workerGroup)
                 .channel(getServerSocketChannelClass())
                 .option(SO_BACKLOG, 1024)
-                .option(WRITE_SPIN_COUNT, 10);
-        bootstrap.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
-        bootstrap.childHandler(
-                new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("flushConsolidationHandler", new FlushConsolidationHandler(1024, true));
-                        pipeline.addLast("codec", new KvaftDefaultCodecHandler());
-                        pipeline.addLast("connectionHandler", new ConnectionHandler(processManager));
-                        pipeline.addLast("serverRequestHandler", new ServerRequestHandler(processManager));
-                    }
-                }
-        );
+                .option(WRITE_SPIN_COUNT, 10)
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                .childHandler(
+                        new ChannelInitializer<SocketChannel>() {
+                            @Override
+                            protected void initChannel(SocketChannel ch) throws Exception {
+                                ChannelPipeline pipeline = ch.pipeline();
+                                pipeline.addLast("flushConsolidationHandler", new FlushConsolidationHandler(1024, true));
+                                pipeline.addLast("codec", new KvaftDefaultCodecHandler());
+                                pipeline.addLast("connectionHandler", new ConnectionHandler(processManager));
+                                pipeline.addLast("serverRequestHandler", new ServerRequestHandler(processManager));
+                            }
+                        }
+                );
     }
 
     /**

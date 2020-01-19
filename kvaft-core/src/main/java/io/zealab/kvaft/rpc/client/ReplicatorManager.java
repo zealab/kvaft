@@ -2,14 +2,21 @@ package io.zealab.kvaft.rpc.client;
 
 import com.google.common.collect.Maps;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.pool.ChannelPoolHandler;
+import io.netty.handler.flush.FlushConsolidationHandler;
+import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Replicator;
+import io.zealab.kvaft.core.ReplicatorState;
+import io.zealab.kvaft.rpc.protoc.codec.KvaftDefaultCodecHandler;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@Slf4j
 public class ReplicatorManager {
 
     private final Map<String, Replicator> activeReplicators = Maps.newHashMap();
@@ -26,7 +33,15 @@ public class ReplicatorManager {
         return SingletonHolder.instance;
     }
 
-    public void registerActiveReplicator(Replicator replicator) {
+
+    public void registerReplicator(Endpoint endpoint, Client client) {
+        // expose client instance for another thread (maybe)
+        Replicator replicator = new Replicator(endpoint, client, ReplicatorState.CONNECTED);
+        replicator.startHeartbeatTimer();
+        registerReplicator(replicator);
+    }
+
+    public void registerReplicator(Replicator replicator) {
         final Lock wl = replicatorLock.writeLock();
         wl.lock();
         try {
@@ -50,17 +65,19 @@ public class ReplicatorManager {
 
         @Override
         public void channelReleased(Channel ch) throws Exception {
-
+            log.debug("ReplicatorChannelPoolHandler => channel released");
         }
 
         @Override
         public void channelAcquired(Channel ch) throws Exception {
-
+            log.debug("ReplicatorChannelPoolHandler => channel acquired");
         }
 
         @Override
         public void channelCreated(Channel ch) throws Exception {
-
+            ChannelPipeline pipeline = ch.pipeline();
+            pipeline.addLast("codec", new KvaftDefaultCodecHandler());
+            pipeline.addLast("flushConsolidationHandler", new FlushConsolidationHandler(1024, true));
         }
     }
 }

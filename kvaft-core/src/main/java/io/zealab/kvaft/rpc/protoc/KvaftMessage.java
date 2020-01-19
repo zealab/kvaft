@@ -4,6 +4,8 @@ import com.google.protobuf.Message;
 import lombok.Builder;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 /**
  * communication message entity
  * <p>
@@ -19,7 +21,7 @@ import lombok.ToString;
  */
 @Builder
 @ToString
-public class KvaftMessage<T extends Message> {
+public class KvaftMessage<T extends Message> implements Serializable {
 
     private long requestId;
 

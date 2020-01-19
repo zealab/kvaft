@@ -24,6 +24,7 @@ public class KvaftDefaultCodecHandler extends ByteToMessageCodec<KvaftMessage<?>
     @Override
     protected void encode(ChannelHandlerContext ctx, KvaftMessage<?> msg, ByteBuf out) throws Exception {
         ByteBuffer encoded = codec.encode(msg);
+        encoded.flip();
         out.writeBytes(encoded);
     }
 

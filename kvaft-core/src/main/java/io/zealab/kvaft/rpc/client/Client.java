@@ -1,37 +1,27 @@
 package io.zealab.kvaft.rpc.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
-import io.netty.channel.pool.ChannelHealthChecker;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.pool.SimpleChannelPool;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.flush.FlushConsolidationHandler;
-import io.netty.handler.timeout.TimeoutException;
 import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Initializer;
-import io.zealab.kvaft.core.Replicator;
-import io.zealab.kvaft.core.ReplicatorState;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
-import io.zealab.kvaft.rpc.protoc.codec.KvaftDefaultCodecHandler;
 import io.zealab.kvaft.util.Assert;
-import io.zealab.kvaft.util.IpAddressUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static io.zealab.kvaft.util.NettyUtil.getClientSocketChannelClass;
 import static io.zealab.kvaft.util.NettyUtil.newEventLoopGroup;
 
 @Slf4j
 public class Client implements Initializer {
-
-    private Bootstrap bootstrap = new Bootstrap();
-
-    private final ReplicatorManager rm = ReplicatorManager.getInstance();
 
     private volatile SimpleChannelPool channelPool;
 
@@ -45,105 +35,27 @@ public class Client implements Initializer {
 
     @Override
     public void init() {
-        bootstrap.remoteAddress(endpoint.getIp(), endpoint.getPort());
-        bootstrap.group(workerGroup)
+        Bootstrap bootstrap = new Bootstrap();
+        bootstrap.remoteAddress(endpoint.getIp(), endpoint.getPort())
+                .group(workerGroup)
                 .channel(getClientSocketChannelClass())
-                .option(ChannelOption.SO_KEEPALIVE, true)
-                .handler(
-                        new ChannelInitializer<SocketChannel>() {
-                            @Override
-                            protected void initChannel(SocketChannel ch) throws Exception {
-                                ChannelPipeline pipeline = ch.pipeline();
-                                pipeline.addLast("codec", new KvaftDefaultCodecHandler());
-                                pipeline.addLast("flushConsolidationHandler", new FlushConsolidationHandler(1024, true));
-                            }
-                        }
-                );
-        channelPool = new SimpleChannelPool(bootstrap, new ReplicatorManager.ReplicatorChannelPoolHandler(), ChannelHealthChecker.ACTIVE);
-    }
-
-    /**
-     * connect to the endpoint and create a channel
-     *
-     * @return channel
-     *
-     * @throws InterruptedException
-     */
-    @Nullable
-    public Channel connect(int cTimeout) throws InterruptedException, ExecutionException {
-        ensureInitialize();
-        Future<Channel> future = channelPool.acquire();
-        long beginTime = System.currentTimeMillis();
-        while (!future.isDone() && System.currentTimeMillis() - beginTime <= cTimeout) {
-            Thread.sleep(1000L);
-        }
-        if (!future.isDone()) {
-            log.error("connection establish timeout in {} ms, endpoint is {}:{}", cTimeout, endpoint.getIp(), endpoint.getPort());
-            return null;
-        }
-        Channel channel = future.get();
-        log.info("connect to host={},port={} successfully.", endpoint.getIp(), endpoint.getPort());
-        String address = IpAddressUtil.convertChannelRemoteAddress(channel);
-        String[] array = address.split(":");
-        Endpoint endpoint = Endpoint.builder().ip(array[0]).port(Integer.parseInt(array[1])).build();
-        // expose client instance for another thread (maybe)
-        Replicator replicator = new Replicator(endpoint, this, ReplicatorState.CONNECTED);
-        replicator.startHeartbeatTimer();
-        rm.registerActiveReplicator(replicator);
-        return channel;
-    }
-
-    /**
-     * retrieve client channel
-     *
-     * @return the channel
-     */
-    @Nullable
-    public Future<Channel> getConnection() {
-        ensureInitialize();
-        return channelPool.acquire();
-    }
-
-    /**
-     * get connection from pool
-     *
-     * @param cTimeout
-     *
-     * @return
-     */
-    @Nullable
-    public Channel getConnection(int cTimeout) {
-        ensureInitialize();
-        final Future<Channel> channelFuture = channelPool.acquire();
-        Assert.notNull(channelFuture, "channel future could not be null");
-        try {
-            return channelFuture.get(cTimeout, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            log.error("rpc connection timeout in " + cTimeout + " ms", e);
-            return null;
-        } catch (Exception e) {
-            log.error("rpc connection establish failed.", e);
-            return null;
-        }
-    }
-
-    private void ensureInitialize() {
-        if (Objects.isNull(channelPool)) {
-            throw new IllegalStateException("Client is not finish initialization yet.");
-        }
+                .option(ChannelOption.SO_KEEPALIVE, true);
+        channelPool = new FixedChannelPool(bootstrap, new ReplicatorManager.ReplicatorChannelPoolHandler(), 10, 1024);
     }
 
     /**
      * invoke in one way method
      *
-     * @param channel   connection
      * @param req       req entity
      * @param soTimeout socket timeout in milliseconds
      */
-    public void invokeOneWay(Channel channel, KvaftMessage<?> req, int soTimeout) {
+    public void invokeOneWay(KvaftMessage<?> req, int cTimeout, int soTimeout) {
+        ensureInitialize();
+        final Channel channel = lazyLoad(cTimeout);
+        Assert.notNull(channel, "channel future could not be null");
         long begin = System.currentTimeMillis();
-        // tips: channel.writeAndFlush is thread-safe
         try {
+            // tips: channel.writeAndFlush is thread-safe
             channel.writeAndFlush(req).addListener(
                     (ChannelFutureListener) future -> {
                         while (!future.isDone() && System.currentTimeMillis() - begin <= soTimeout) {
@@ -162,6 +74,39 @@ public class Client implements Initializer {
             );
         } finally {
             channelPool.release(channel);
+        }
+    }
+
+    /**
+     * get connection from pool
+     *
+     * @param cTimeout connection timeout
+     *
+     * @return
+     */
+    @Nullable
+    private Channel lazyLoad(int cTimeout) {
+        ensureInitialize();
+        final Future<Channel> channelFuture = channelPool.acquire();
+        Assert.notNull(channelFuture, "channel future could not be null");
+        try {
+            return channelFuture.get(cTimeout, TimeUnit.MILLISECONDS);
+        } catch (CancellationException e) {
+            log.error("rpc connection was cancelled.", e);
+        } catch (InterruptedException e) {
+            log.error("rpc connection was interrupted.", e);
+        } catch (ExecutionException e) {
+            log.error("rpc connection execution has an error ", e);
+        } catch (TimeoutException e) {
+            log.error("rpc connection timeout in " + cTimeout + " ms", e);
+        }
+        return null;
+    }
+
+
+    private void ensureInitialize() {
+        if (Objects.isNull(channelPool)) {
+            throw new IllegalStateException("Client is not finish initialization yet.");
         }
     }
 
