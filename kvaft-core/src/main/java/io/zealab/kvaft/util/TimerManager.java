@@ -1,6 +1,4 @@
-package io.zealab.kvaft.core;
-
-import io.zealab.kvaft.util.NamedThreadFactory;
+package io.zealab.kvaft.util;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;

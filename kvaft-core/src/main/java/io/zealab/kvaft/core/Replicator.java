@@ -2,6 +2,7 @@ package io.zealab.kvaft.core;
 
 import io.zealab.kvaft.rpc.client.Client;
 import io.zealab.kvaft.rpc.client.StubImpl;
+import io.zealab.kvaft.util.TimerManager;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +51,9 @@ public class Replicator {
         return client;
     }
 
+    /**
+     * starting a heartbeat task
+     */
     public void startHeartbeatTimer() {
         this.heartbeatTimer = TimerManager.scheduleWithFixRate(new HeartbeatTask(), 10, 10, TimeUnit.SECONDS);
     }

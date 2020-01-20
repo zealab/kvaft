@@ -1,5 +1,7 @@
 package io.zealab.kvaft.config;
 
+import com.google.protobuf.Message;
+
 import java.lang.annotation.*;
 
 /**
@@ -13,5 +15,5 @@ public @interface Processor {
     /**
      * PB message class
      */
-    Class<?> messageClazz();
+    Class<? extends Message> messageClazz();
 }

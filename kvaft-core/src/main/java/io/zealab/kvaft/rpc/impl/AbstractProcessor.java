@@ -23,7 +23,7 @@ public abstract class AbstractProcessor<T extends Message> implements ChannelPro
     /**
      * handle payload
      *
-     * @param payload
+     * @param payload payload
      */
     protected abstract void doProcess0(Peer peer, T payload);
 
