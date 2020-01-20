@@ -2,6 +2,7 @@ package io.zealab.kvaft.rpc.impl;
 
 import com.google.protobuf.Message;
 import io.netty.channel.Channel;
+import io.zealab.kvaft.config.Processor;
 import io.zealab.kvaft.core.Peer;
 import io.zealab.kvaft.rpc.ChannelProcessor;
 import io.zealab.kvaft.rpc.ChannelProcessorManager;
@@ -15,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author LeonWong
  */
 @Slf4j
-public abstract class AbstractProcessor<T extends Message> implements ChannelProcessor<T> {
+public abstract class AbstractProcessor<T extends Message> implements ChannelProcessor {
 
     protected final static ChannelProcessorManager cpm = ChannelProcessorManager.getInstance();
 
@@ -27,18 +28,35 @@ public abstract class AbstractProcessor<T extends Message> implements ChannelPro
     protected abstract void doProcess0(Peer peer, T payload);
 
     /**
+     * assert type match
+     *
+     * @param payload payload
+     */
+    @Override
+    public void assertMatch(Message payload) {
+        Processor processor = this.getClass().getAnnotation(Processor.class);
+        if (null != processor) {
+            boolean isMatch = processor.messageClazz().getName().equals(payload.getClass().getName());
+            if (!isMatch) {
+                throw new IllegalArgumentException("payload is not match here");
+            }
+        }
+    }
+
+    /**
      * pre process
      *
      * @param msg message entity
      */
-    public void doProcess(KvaftMessage<T> msg, Channel channel) {
-        checkMsg(msg);
+    @Override
+    @SuppressWarnings("unchecked")
+    public void doProcess(KvaftMessage<?> msg, Channel channel) {
+        Message payload = msg.payload();
+        assertMatch(payload);
         Peer peer = Peer.from(channel);
         Assert.notNull(peer, "peer could not be null");
-        doProcess0(peer, msg.payload());
-    }
-
-    private void checkMsg(KvaftMessage<T> msg) {
-        // TODO verify request id & nodeid
+        // replace it
+        peer = cpm.getPeer(peer.getEndpoint().toString());
+        doProcess0(peer, (T) payload);
     }
 }

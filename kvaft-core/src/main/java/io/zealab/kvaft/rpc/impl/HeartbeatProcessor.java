@@ -14,6 +14,7 @@ public class HeartbeatProcessor extends AbstractProcessor<RemoteCalls.Heartbeat>
 
     @Override
     protected void doProcess0(Peer peer, RemoteCalls.Heartbeat payload) {
-        // TODO
+        long timestamp = System.currentTimeMillis();
+        peer.setLastHbTime(timestamp);
     }
 }

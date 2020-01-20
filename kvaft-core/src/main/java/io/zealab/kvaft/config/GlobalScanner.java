@@ -18,9 +18,11 @@ import java.io.IOException;
 @Slf4j
 public class GlobalScanner implements Initializer {
 
-    private final static ImmutableSet<? extends Scanner> SCANNERS = ImmutableSet.of(
-            ProtocHandleManager.getInstance(), ChannelProcessorManager.getInstance()
-    );
+    // a many kinds of manager extension point
+    private final static ImmutableSet<? extends Scanner> SCANNERS =
+            ImmutableSet.of(
+                    ProtocHandleManager.getInstance(), ChannelProcessorManager.getInstance()
+            );
 
     private final static String GLOBAL_SCAN = "io.zealab.kvaft";
 
@@ -34,8 +36,8 @@ public class GlobalScanner implements Initializer {
 
     private void scanPackage() {
         try {
-            ImmutableSet<ClassPath.ClassInfo> classInfos = ClassPath.from(cl).getTopLevelClassesRecursive(GLOBAL_SCAN);
-            for (ClassPath.ClassInfo classInfo : classInfos) {
+            ImmutableSet<ClassPath.ClassInfo> classes = ClassPath.from(cl).getTopLevelClassesRecursive(GLOBAL_SCAN);
+            for (ClassPath.ClassInfo classInfo : classes) {
                 Class<?> clazz = classInfo.load();
                 SCANNERS.stream().filter(e -> clazz.getName().startsWith(e.scanPackage())).forEach(
                         e -> e.onClazzScanned(clazz)

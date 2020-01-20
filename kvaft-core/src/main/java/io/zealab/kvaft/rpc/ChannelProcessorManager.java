@@ -22,13 +22,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Slf4j
 public class ChannelProcessorManager implements Scanner {
 
-    private final Map<String, ChannelProcessor<?>> registry = Maps.newHashMap();
+    private final Map<String, ChannelProcessor> registry = Maps.newHashMap();
 
     private final Map<String, Peer> peers = Maps.newHashMap();
 
+    /**
+     * channel process package directory
+     */
     private final static String PACKAGE_SCAN = "io.zealab.kvaft";
 
-    private final ReadWriteLock peerLock = new ReentrantReadWriteLock();
+    private final ReadWriteLock peersLock = new ReentrantReadWriteLock();
 
     private ChannelProcessorManager() {}
 
@@ -43,7 +46,7 @@ public class ChannelProcessorManager implements Scanner {
      *
      * @return the channel processor
      */
-    public ChannelProcessor<?> getProcessor(String payloadClazz) {
+    public ChannelProcessor getProcessor(String payloadClazz) {
         return registry.get(payloadClazz);
     }
 
@@ -52,7 +55,7 @@ public class ChannelProcessorManager implements Scanner {
      *
      * @return registry
      */
-    public Map<String, ChannelProcessor<?>> getRegistry() {
+    public Map<String, ChannelProcessor> getRegistry() {
         return ImmutableMap.copyOf(registry);
     }
 
@@ -62,7 +65,7 @@ public class ChannelProcessorManager implements Scanner {
      * @param peer
      */
     public void addPeer(Peer peer) {
-        final Lock wl = peerLock.writeLock();
+        final Lock wl = peersLock.writeLock();
         wl.lock();
         try {
             peers.put(peer.getEndpoint().toString(), peer);
@@ -80,7 +83,7 @@ public class ChannelProcessorManager implements Scanner {
      * @return
      */
     public Peer getPeer(String nodeId) {
-        final Lock rl = peerLock.readLock();
+        final Lock rl = peersLock.readLock();
         rl.lock();
         try {
             return peers.get(nodeId);
@@ -95,7 +98,7 @@ public class ChannelProcessorManager implements Scanner {
      * @param nodeId
      */
     public void removePeer(String nodeId) {
-        final Lock wl = peerLock.writeLock();
+        final Lock wl = peersLock.writeLock();
         wl.lock();
         try {
             Peer peer = peers.remove(nodeId);
@@ -114,7 +117,7 @@ public class ChannelProcessorManager implements Scanner {
      */
     public void handleTimeoutPeers(int timeoutInMs) {
         final long currTime = System.currentTimeMillis();
-        final Lock rl = peerLock.readLock();
+        final Lock rl = peersLock.readLock();
         rl.lock();
         Map<String, Peer> copy;
         try {
@@ -122,7 +125,7 @@ public class ChannelProcessorManager implements Scanner {
         } finally {
             rl.unlock();
         }
-        Lock wl = peerLock.writeLock();
+        Lock wl = peersLock.writeLock();
         try {
             copy.entrySet().parallelStream().forEach(
                     entry -> {
@@ -154,7 +157,7 @@ public class ChannelProcessorManager implements Scanner {
                 return;
             }
             if (instance instanceof ChannelProcessor) {
-                registry.putIfAbsent(kvaftProcessor.messageClazz().toString(), (ChannelProcessor<?>) instance);
+                registry.putIfAbsent(kvaftProcessor.messageClazz().getName(), (ChannelProcessor) instance);
             }
         }
     }

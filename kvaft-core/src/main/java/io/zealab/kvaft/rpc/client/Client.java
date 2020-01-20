@@ -51,7 +51,7 @@ public class Client implements Initializer {
      */
     public void invokeOneWay(KvaftMessage<?> req, int cTimeout, int soTimeout) {
         ensureInitialize();
-        final Channel channel = lazyLoad(cTimeout);
+        final Channel channel = lazyGet(cTimeout);
         Assert.notNull(channel, "channel future could not be null");
         long begin = System.currentTimeMillis();
         try {
@@ -85,7 +85,7 @@ public class Client implements Initializer {
      * @return
      */
     @Nullable
-    private Channel lazyLoad(int cTimeout) {
+    private Channel lazyGet(int cTimeout) {
         ensureInitialize();
         final Future<Channel> channelFuture = channelPool.acquire();
         Assert.notNull(channelFuture, "channel future could not be null");
@@ -98,7 +98,7 @@ public class Client implements Initializer {
         } catch (ExecutionException e) {
             log.error("rpc connection execution has an error ", e);
         } catch (TimeoutException e) {
-            log.error("rpc connection timeout in " + cTimeout + " ms", e);
+            log.error(String.format("rpc connection timeout in %d ms", cTimeout), e);
         }
         return null;
     }
