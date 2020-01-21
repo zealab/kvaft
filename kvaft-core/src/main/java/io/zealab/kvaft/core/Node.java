@@ -17,6 +17,11 @@ public interface Node extends Initializer {
     Long currTerm();
 
     /**
+     * starting rpc server
+     */
+    void start();
+
+    /**
      * shutdown node
      */
     void shutdown();
@@ -26,5 +31,5 @@ public interface Node extends Initializer {
      *
      * @return peer
      */
-    Peer leader();
+    Participant leader();
 }

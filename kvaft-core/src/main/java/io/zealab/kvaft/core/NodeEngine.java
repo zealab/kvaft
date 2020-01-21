@@ -1,24 +1,56 @@
 package io.zealab.kvaft.core;
 
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.zealab.kvaft.config.CommonConfig;
 import io.zealab.kvaft.config.GlobalScanner;
 import io.zealab.kvaft.rpc.ChannelProcessorManager;
+import io.zealab.kvaft.rpc.NioServer;
 import io.zealab.kvaft.rpc.client.Stub;
 import io.zealab.kvaft.rpc.client.StubImpl;
+import io.zealab.kvaft.util.Assert;
+import lombok.extern.slf4j.Slf4j;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
+ * node engine core
+ *
  * @author LeonWong
  */
+@Slf4j
 public class NodeEngine implements Node {
+
+    private final CommonConfig commonConfig = new CommonConfig();
+
+    private String configFileLocation = "kvaft.yml";
 
     private final static Stub stub = new StubImpl();
 
-    private volatile NodeState state;
+    private NioServer server;
+
+    private AtomicLong term = new AtomicLong(0L);
+
+    private volatile Participant leader;
+
+    private volatile boolean isLeader;
+
+    private ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+    private Set<String> ackQueue = Sets.newConcurrentHashSet();
 
     private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
 
@@ -31,44 +63,157 @@ public class NodeEngine implements Node {
 
     @Override
     public boolean isLeader() {
-        return false;
+        return isLeader;
     }
 
     @Override
     public Long currTerm() {
-        return null;
+        return term.get();
+    }
+
+    @Override
+    public void start() {
+        server.start();
+        startSleepTimeoutTask();
     }
 
     @Override
     public void shutdown() {
-
+        // TODO
     }
 
     @Override
-    public Peer leader() {
-        return null;
+    public Participant leader() {
+        return leader;
     }
 
     @Override
     public void init() {
+        // read the config file
+        parseConfigFile();
+        // scanning all package classes for configuration
         GlobalScanner scanner = new GlobalScanner();
         scanner.init();
-        state = NodeState.FOLLOWER;
-        startSleepTimeoutTask();
+        // starting rpc server
+        server = new NioServer(commonConfig.getHost(), commonConfig.getPort());
+        server.init();
     }
 
+    /**
+     * begin to elect itself
+     */
+    public void electSelfNode() {
+        // TODO
+    }
+
+    /**
+     * starting a sleep timeout task
+     */
     public void startSleepTimeoutTask() {
         asyncExecutor.execute(new SleepTimeoutTask());
     }
 
     /**
-     * When sleep thread task awake, it will broadcast preVote message to every node.
+     * starting a pre vote timeout task
+     */
+    public void startPreVoteSpinTask(long term) {
+        asyncExecutor.execute(new PreVoteSpinTask(term));
+    }
+
+    public void setConfigFileLocation(String location) {
+        this.configFileLocation = location;
+    }
+
+    /**
+     * reset leader when heartbeat timeout
+     */
+    private void resetLeader() {
+        Lock wl = rwLock.writeLock();
+        try {
+            wl.lock();
+            this.leader = null;
+            this.isLeader = false;
+            startSleepTimeoutTask();
+        } finally {
+            wl.unlock();
+        }
+    }
+
+    private void parseConfigFile() {
+        Yaml yaml = new Yaml();
+        // Files.newInputStream(Paths.get(configFileLocation));
+        InputStream configStream = null;
+        try {
+            configStream = Files.newInputStream(Paths.get(configFileLocation));
+        } catch (IOException e) {
+            log.warn("could not find any file from Files.newInputStream ");
+            configStream = getClass().getClassLoader().getResourceAsStream(configFileLocation);
+        }
+        Assert.notNull(configStream, "The config file could be not existed");
+        Map<String, Object> configs = yaml.load(configStream);
+        this.commonConfig.setHost((String) configs.getOrDefault("host", commonConfig.getHost()));
+        this.commonConfig.setPort((int) configs.getOrDefault("port", String.valueOf(commonConfig.getPort())));
+        String patcpsConfig = (String) configs.get("participants");
+        Assert.notNull(patcpsConfig, "participants field cannot be null");
+        Arrays.asList(patcpsConfig.split(",")).forEach(
+                e -> this.commonConfig.getParticipants().add(Participant.from(e))
+        );
+    }
+
+    /**
+     * When the sleep thread task awake, it will broadcast preVote message to every node.
      */
     public class SleepTimeoutTask implements Runnable {
 
         @Override
         public void run() {
-            //TODO sleep in random seconds
+            Random random = new Random();
+            int r = random.nextInt(5000);
+            try {
+                Thread.sleep(r);
+            } catch (InterruptedException e) {
+                log.error("SleepTimeoutTask was interrupted", e);
+            }
+            if (leader == null) {
+                long termVal = term.incrementAndGet();
+                log.info("start to broadcast preVote msg to the other participants");
+                // not decide which node is leader
+                List<Participant> participants = commonConfig.getParticipants();
+                participants.parallelStream().forEach(
+                        p -> {
+                            Endpoint endpoint = p.getEndpoint();
+                            stub.preVoteReq(endpoint, termVal);
+                        }
+                );
+                startPreVoteSpinTask(termVal);
+            }
+        }
+    }
+
+    /**
+     * spin check for preVote ack info
+     */
+    public class PreVoteSpinTask implements Runnable {
+
+        private final long term;
+
+        public PreVoteSpinTask(long term) {
+            this.term = term;
+        }
+
+        @Override
+        public void run() {
+            long begin = System.currentTimeMillis();
+            while (System.currentTimeMillis() - begin < commonConfig.getPreVoteSpin()) {
+                int quorum = (commonConfig.getParticipants().size() + 1) / 2 + 1;
+                long currTerm = currTerm();
+                if (currTerm == term && ackQueue.size() >= quorum) {
+                    electSelfNode();
+                    return;
+                }
+            }
+            log.warn("PreVoteSpinTask timeout in {} seconds", commonConfig.getPreVoteSpin());
+            startSleepTimeoutTask();
         }
     }
 }

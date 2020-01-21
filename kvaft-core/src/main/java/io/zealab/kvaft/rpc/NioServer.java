@@ -30,15 +30,19 @@ public class NioServer implements Initializer {
 
     private final EventLoopGroup workerGroup = newEventLoopGroup(Runtime.getRuntime().availableProcessors() * 2, "worker-loop-group-%d");
 
+    private final String host;
+
     private final int port;
 
     private final ServerBootstrap bootstrap = new ServerBootstrap();
 
     private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
 
-    public NioServer(int port) {
+    public NioServer(String host, int port) {
+        this.host = host;
         this.port = port;
     }
+
 
     @Override
     public void init() {
@@ -72,7 +76,7 @@ public class NioServer implements Initializer {
                         log.info("netty server starting...");
                         ChannelFuture future = bootstrap.bind(port).sync();
                         if (future.isSuccess()) {
-                            log.info("netty server started ip={},port={}", "0.0.0.0", port);
+                            log.info("netty server started host={},port={}", host, port);
                         }
                     } catch (InterruptedException e) {
                         log.error("do start netty server...");

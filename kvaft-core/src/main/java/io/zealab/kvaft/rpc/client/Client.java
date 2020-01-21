@@ -51,7 +51,7 @@ public class Client implements Initializer {
      */
     public void invokeOneWay(KvaftMessage<?> req, int cTimeout, int soTimeout) {
         ensureInitialize();
-        final Channel channel = lazyGet(cTimeout);
+        final Channel channel = createChannel(cTimeout);
         Assert.notNull(channel, "channel future could not be null");
         long begin = System.currentTimeMillis();
         try {
@@ -85,7 +85,7 @@ public class Client implements Initializer {
      * @return
      */
     @Nullable
-    private Channel lazyGet(int cTimeout) {
+    private Channel createChannel(int cTimeout) {
         ensureInitialize();
         final Future<Channel> channelFuture = channelPool.acquire();
         Assert.notNull(channelFuture, "channel future could not be null");

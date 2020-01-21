@@ -113,9 +113,9 @@ public class ChannelProcessorManager implements Scanner {
     /**
      * handle timeout channel validation
      *
-     * @param timeoutInMs timeout
+     * @param timeoutMs timeout
      */
-    public void handleTimeoutPeers(int timeoutInMs) {
+    public void handleTimeoutPeers(int timeoutMs) {
         final long currTime = System.currentTimeMillis();
         final Lock rl = peersLock.readLock();
         rl.lock();
@@ -131,7 +131,7 @@ public class ChannelProcessorManager implements Scanner {
                     entry -> {
                         Peer peer = entry.getValue();
                         if (!peer.getChannel().isActive()
-                                || currTime - peer.getLastHbTime() > timeoutInMs) {
+                                || currTime - peer.getLastHbTime() > timeoutMs) {
                             peers.remove(peer.getEndpoint().toString());
                             ChannelFuture future = peer.getChannel().close();
                             if (future.isSuccess()) {
