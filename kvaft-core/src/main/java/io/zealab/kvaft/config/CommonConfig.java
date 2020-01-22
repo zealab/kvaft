@@ -1,6 +1,7 @@
 package io.zealab.kvaft.config;
 
 import com.google.common.collect.Lists;
+import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Participant;
 import lombok.Data;
 
@@ -14,9 +15,10 @@ public class CommonConfig {
      */
     private List<Participant> participants = Lists.newArrayList();
 
-    private String host = "0.0.0.0";
-
-    private int port = 18099;
+    /**
+     * TCP server binding endpoint
+     */
+    private Endpoint bindEndpoint = Endpoint.builder().ip("0.0.0.0").port(2046).build();
 
     /**
      * 5s timeout for preVote local spin check

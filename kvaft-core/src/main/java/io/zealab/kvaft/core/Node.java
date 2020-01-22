@@ -3,7 +3,7 @@ package io.zealab.kvaft.core;
 public interface Node extends Initializer {
 
     /**
-     * check is Leader
+     * check if it's a Leader
      *
      * @return
      */
@@ -17,12 +17,12 @@ public interface Node extends Initializer {
     Long currTerm();
 
     /**
-     * starting rpc server
+     * starting this node engine
      */
     void start();
 
     /**
-     * shutdown node
+     * shutdown node engine
      */
     void shutdown();
 
@@ -32,4 +32,12 @@ public interface Node extends Initializer {
      * @return peer
      */
     Participant leader();
+
+    /**
+     * preVote request handle method
+     *
+     * @param peer client
+     * @param term offer term
+     */
+    void handlePreVoteRequest(Peer peer, long term);
 }

@@ -23,7 +23,7 @@ public class Peer {
     /**
      * last heartbeat time
      */
-    private long lastHbTime;
+    private volatile long lastHbTime;
 
     /**
      * connection

@@ -14,6 +14,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -46,8 +48,6 @@ public class NodeEngine implements Node {
 
     private volatile Participant leader;
 
-    private volatile boolean isLeader;
-
     private ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     private Set<String> ackQueue = Sets.newConcurrentHashSet();
@@ -63,7 +63,8 @@ public class NodeEngine implements Node {
 
     @Override
     public boolean isLeader() {
-        return isLeader;
+        Participant leader = leader();
+        return leader != null && leader.isOntology();
     }
 
     @Override
@@ -88,14 +89,21 @@ public class NodeEngine implements Node {
     }
 
     @Override
+    public void handlePreVoteRequest(Peer peer, long term) {
+        //TODO
+    }
+
+    @Override
     public void init() {
         // read the config file
         parseConfigFile();
         // scanning all package classes for configuration
         GlobalScanner scanner = new GlobalScanner();
         scanner.init();
+        // binding node
+        processManager.bindNode(this);
         // starting rpc server
-        server = new NioServer(commonConfig.getHost(), commonConfig.getPort());
+        server = new NioServer(commonConfig.getBindEndpoint().getIp(), commonConfig.getBindEndpoint().getPort());
         server.init();
     }
 
@@ -132,7 +140,6 @@ public class NodeEngine implements Node {
         try {
             wl.lock();
             this.leader = null;
-            this.isLeader = false;
             startSleepTimeoutTask();
         } finally {
             wl.unlock();
@@ -141,8 +148,7 @@ public class NodeEngine implements Node {
 
     private void parseConfigFile() {
         Yaml yaml = new Yaml();
-        // Files.newInputStream(Paths.get(configFileLocation));
-        InputStream configStream = null;
+        InputStream configStream;
         try {
             configStream = Files.newInputStream(Paths.get(configFileLocation));
         } catch (IOException e) {
@@ -151,13 +157,23 @@ public class NodeEngine implements Node {
         }
         Assert.notNull(configStream, "The config file could be not existed");
         Map<String, Object> configs = yaml.load(configStream);
-        this.commonConfig.setHost((String) configs.getOrDefault("host", commonConfig.getHost()));
-        this.commonConfig.setPort((int) configs.getOrDefault("port", String.valueOf(commonConfig.getPort())));
+
+        Endpoint endpoint = this.commonConfig.getBindEndpoint();
+        try {
+            InetAddress local = InetAddress.getLocalHost();
+            endpoint.setIp(local.getHostAddress());
+        } catch (UnknownHostException e) {
+            log.error("unknown host", e);
+        }
+        endpoint.setPort((int) configs.getOrDefault("port", 2046));
+        endpoint.setIp((String) configs.getOrDefault("host", endpoint.getIp()));
+
         String patcpsConfig = (String) configs.get("participants");
         Assert.notNull(patcpsConfig, "participants field cannot be null");
         Arrays.asList(patcpsConfig.split(",")).forEach(
-                e -> this.commonConfig.getParticipants().add(Participant.from(e))
+                e -> this.commonConfig.getParticipants().add(Participant.from(e, false))
         );
+        this.commonConfig.getParticipants().add(Participant.from(endpoint.toString(), true));
     }
 
     /**
@@ -179,7 +195,7 @@ public class NodeEngine implements Node {
                 log.info("start to broadcast preVote msg to the other participants");
                 // not decide which node is leader
                 List<Participant> participants = commonConfig.getParticipants();
-                participants.parallelStream().forEach(
+                participants.parallelStream().filter(e -> !e.isOntology()).forEach(
                         p -> {
                             Endpoint endpoint = p.getEndpoint();
                             stub.preVoteReq(endpoint, termVal);

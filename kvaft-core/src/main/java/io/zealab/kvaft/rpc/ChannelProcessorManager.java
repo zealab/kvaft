@@ -4,12 +4,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.netty.channel.ChannelFuture;
 import io.zealab.kvaft.config.Processor;
+import io.zealab.kvaft.core.Node;
 import io.zealab.kvaft.core.Peer;
+import io.zealab.kvaft.core.ProcessorType;
 import io.zealab.kvaft.core.Scanner;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -32,6 +35,8 @@ public class ChannelProcessorManager implements Scanner {
     private final static String PACKAGE_SCAN = "io.zealab.kvaft";
 
     private final ReadWriteLock peersLock = new ReentrantReadWriteLock();
+
+    private volatile Node node = null;
 
     private ChannelProcessorManager() {}
 
@@ -73,6 +78,24 @@ public class ChannelProcessorManager implements Scanner {
         } finally {
             wl.unlock();
         }
+    }
+
+    /**
+     * binding node implementation
+     *
+     * @param node
+     */
+    public void bindNode(Node node) {
+        this.node = node;
+    }
+
+    /**
+     * get current node
+     *
+     * @return
+     */
+    public Optional<Node> getNode() {
+        return Optional.ofNullable(node);
     }
 
     /**
@@ -148,7 +171,8 @@ public class ChannelProcessorManager implements Scanner {
     @Override
     public void onClazzScanned(Class<?> clazz) {
         Processor kvaftProcessor = clazz.getAnnotation(Processor.class);
-        if (Objects.nonNull(kvaftProcessor)) {
+        if (Objects.nonNull(kvaftProcessor)
+                && kvaftProcessor.handleType().equals(ProcessorType.REQ)) {
             Object instance;
             try {
                 instance = clazz.newInstance();

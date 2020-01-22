@@ -2,6 +2,7 @@ package io.zealab.kvaft.rpc.impl;
 
 import io.zealab.kvaft.config.Processor;
 import io.zealab.kvaft.core.Peer;
+import io.zealab.kvaft.core.ProcessorType;
 import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 
 /**
@@ -9,8 +10,8 @@ import io.zealab.kvaft.rpc.protoc.RemoteCalls;
  *
  * @author LeonWong
  */
-@Processor(messageClazz = RemoteCalls.Heartbeat.class)
-public class HeartbeatProcessor extends AbstractProcessor<RemoteCalls.Heartbeat> {
+@Processor(handleType = ProcessorType.REQ, messageClazz = RemoteCalls.Heartbeat.class)
+public class HeartbeatProcessor extends RequestProcessor<RemoteCalls.Heartbeat> {
 
     @Override
     protected void doProcess0(Peer peer, RemoteCalls.Heartbeat payload) {

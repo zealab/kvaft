@@ -34,6 +34,17 @@ public class StubImpl implements Stub {
                 .payload(preVoteReq)
                 .requestId(requestId.getValue())
                 .build();
-        client.invokeOneWay(req, 1000, 1000);
+        client.invokeWithPromise(req, 1000,
+                future -> {
+                    while (!future.isDone()) {
+                        Thread.sleep(1000);
+                    }
+                    if (!future.isSuccess()) {
+                        log.error("rpc request failed.", future.cause());
+                        return;
+                    }
+                    // TODO
+                }
+        );
     }
 }
