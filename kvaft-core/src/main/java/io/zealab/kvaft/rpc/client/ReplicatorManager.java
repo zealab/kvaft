@@ -29,6 +29,8 @@ public class ReplicatorManager implements Scanner {
 
     private final ReadWriteLock replicatorLock = new ReentrantReadWriteLock();
 
+    private volatile Node node = null;
+
     private ReplicatorManager() {}
 
     private static class SingletonHolder {
@@ -37,6 +39,15 @@ public class ReplicatorManager implements Scanner {
 
     public static ReplicatorManager getInstance() {
         return SingletonHolder.instance;
+    }
+
+    /**
+     * binding node implementation
+     *
+     * @param node
+     */
+    public void bindNode(Node node) {
+        this.node = node;
     }
 
     public void registerReplicator(Endpoint endpoint, Client client) {
@@ -114,6 +125,7 @@ public class ReplicatorManager implements Scanner {
         public void channelCreated(Channel ch) throws Exception {
             ChannelPipeline pipeline = ch.pipeline();
             pipeline.addLast("codec", new KvaftDefaultCodecHandler());
+            pipeline.addLast("responseHandler", new ResponseHandler(getInstance()));
             pipeline.addLast("flushConsolidationHandler", new FlushConsolidationHandler(1024, true));
         }
     }

@@ -78,6 +78,25 @@ public class Client implements Initializer {
     }
 
     /**
+     * invoke with promise
+     *
+     * @param req      request
+     * @param cTimeout connection timeout
+     * @param promise  future listener
+     */
+    public void invokeWithPromise(KvaftMessage<?> req, int cTimeout, ChannelFutureListener promise) {
+        ensureInitialize();
+        final Channel channel = createChannel(cTimeout);
+        Assert.notNull(channel, "channel future could not be null");
+        try {
+            // tips: channel.writeAndFlush is thread-safe
+            channel.writeAndFlush(req).addListener(promise);
+        } finally {
+            channelPool.release(channel);
+        }
+    }
+
+    /**
      * get connection from pool
      *
      * @param cTimeout connection timeout

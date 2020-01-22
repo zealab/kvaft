@@ -6,6 +6,7 @@ import io.zealab.kvaft.config.CommonConfig;
 import io.zealab.kvaft.config.GlobalScanner;
 import io.zealab.kvaft.rpc.ChannelProcessorManager;
 import io.zealab.kvaft.rpc.NioServer;
+import io.zealab.kvaft.rpc.client.ReplicatorManager;
 import io.zealab.kvaft.rpc.client.Stub;
 import io.zealab.kvaft.rpc.client.StubImpl;
 import io.zealab.kvaft.util.Assert;
@@ -53,6 +54,8 @@ public class NodeEngine implements Node {
     private Set<String> ackQueue = Sets.newConcurrentHashSet();
 
     private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
+
+    private final static ReplicatorManager replicatorManager = ReplicatorManager.getInstance();
 
     private final static ExecutorService asyncExecutor = new ThreadPoolExecutor(
             Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2, 30 * 10, TimeUnit.SECONDS,
@@ -102,6 +105,7 @@ public class NodeEngine implements Node {
         scanner.init();
         // binding node
         processManager.bindNode(this);
+        replicatorManager.bindNode(this);
         // starting rpc server
         server = new NioServer(commonConfig.getBindEndpoint().getIp(), commonConfig.getBindEndpoint().getPort());
         server.init();
