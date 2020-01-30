@@ -6,7 +6,6 @@ import io.netty.channel.ChannelFuture;
 import io.zealab.kvaft.config.Processor;
 import io.zealab.kvaft.core.Node;
 import io.zealab.kvaft.core.Peer;
-import io.zealab.kvaft.core.ProcessorType;
 import io.zealab.kvaft.core.Scanner;
 import lombok.extern.slf4j.Slf4j;
 
@@ -171,8 +170,7 @@ public class ChannelProcessorManager implements Scanner {
     @Override
     public void onClazzScanned(Class<?> clazz) {
         Processor kvaftProcessor = clazz.getAnnotation(Processor.class);
-        if (Objects.nonNull(kvaftProcessor)
-                && kvaftProcessor.handleType().equals(ProcessorType.REQ)) {
+        if (Objects.nonNull(kvaftProcessor)) {
             Object instance;
             try {
                 instance = clazz.newInstance();

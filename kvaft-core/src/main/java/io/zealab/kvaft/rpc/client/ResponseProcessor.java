@@ -4,33 +4,29 @@ import com.google.protobuf.Message;
 import io.netty.channel.Channel;
 import io.zealab.kvaft.core.Peer;
 import io.zealab.kvaft.core.Replicator;
+import io.zealab.kvaft.rpc.Callback;
 import io.zealab.kvaft.rpc.impl.AbstractProcessor;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.util.Assert;
 
+import java.util.Map;
+import java.util.Optional;
+
 /**
- * @param <T>
+ * unified rpc response processor
  *
  * @author LeonWong
  */
-public abstract class ResponseProcessor<T extends Message> extends AbstractProcessor {
+public class ResponseProcessor extends AbstractProcessor {
 
     protected final static ReplicatorManager rm = ReplicatorManager.getInstance();
 
     /**
-     * handle payload, it's a extension point for developer create a new processor
-     *
-     * @param payload payload
-     */
-    protected abstract void doProcess0(Client client, T payload);
-
-    /**
-     * pre process
+     * response process
      *
      * @param msg message entity
      */
     @Override
-    @SuppressWarnings("unchecked")
     public void doProcess(KvaftMessage<?> msg, Channel channel) {
         Message payload = msg.payload();
         assertMatch(payload);
@@ -39,6 +35,11 @@ public abstract class ResponseProcessor<T extends Message> extends AbstractProce
         // replace it
         Replicator replicator = rm.getReplicator(peer.getEndpoint().toString());
         Assert.notNull(replicator, "The replicator is not existed");
-        doProcess0(replicator.getClient(), (T) payload);
+        Map<Long, Callback> context = replicator.getClient().getClientContext();
+        Optional.ofNullable(
+                context.get(msg.requestId())
+        ).ifPresent(
+                callback -> callback.apply(payload)
+        );
     }
 }

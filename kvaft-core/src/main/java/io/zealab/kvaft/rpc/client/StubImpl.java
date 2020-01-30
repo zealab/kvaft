@@ -1,11 +1,14 @@
 package io.zealab.kvaft.rpc.client;
 
+import com.google.common.util.concurrent.SettableFuture;
 import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.RequestId;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 import io.zealab.kvaft.util.Assert;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.concurrent.Future;
 
 
 @Slf4j
@@ -25,7 +28,7 @@ public class StubImpl implements Stub {
     }
 
     @Override
-    public void preVoteReq(Endpoint endpoint, long term) {
+    public Future<RemoteCalls.PreVoteAck> preVoteReq(Endpoint endpoint, long term) {
         Client client = ClientFactory.getOrCreate(endpoint);
         RequestId requestId = RequestId.create();
         Assert.notNull(client, String.format("could not establish a connection with endpoint=%s", endpoint.toString()));
@@ -34,6 +37,12 @@ public class StubImpl implements Stub {
                 .payload(preVoteReq)
                 .requestId(requestId.getValue())
                 .build();
-        client.invokeOneWay(req, 1000, 1000);
+        SettableFuture<RemoteCalls.PreVoteAck> result = SettableFuture.create();
+        client.invokeWithCallback(req, 1000, 1000, payload -> {
+            log.info("preVoteReq response={}", payload.toString());
+            RemoteCalls.PreVoteAck ack = (RemoteCalls.PreVoteAck) payload;
+            result.set(ack);
+        });
+        return result;
     }
 }

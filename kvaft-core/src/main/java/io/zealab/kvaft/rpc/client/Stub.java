@@ -1,6 +1,9 @@
 package io.zealab.kvaft.rpc.client;
 
 import io.zealab.kvaft.core.Endpoint;
+import io.zealab.kvaft.rpc.protoc.RemoteCalls;
+
+import java.util.concurrent.Future;
 
 public interface Stub {
 
@@ -17,5 +20,5 @@ public interface Stub {
      * @param endpoint toWhere
      * @param term     currTerm
      */
-    void preVoteReq(Endpoint endpoint, long term);
+    Future<RemoteCalls.PreVoteAck> preVoteReq(Endpoint endpoint, long term);
 }

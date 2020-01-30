@@ -1,5 +1,6 @@
 package io.zealab.kvaft.rpc.client;
 
+import com.google.common.collect.Maps;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -9,11 +10,13 @@ import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.pool.SimpleChannelPool;
 import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Initializer;
+import io.zealab.kvaft.rpc.Callback;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.util.Assert;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.*;
 
@@ -28,6 +31,8 @@ public class Client implements Initializer {
     private final EventLoopGroup workerGroup = newEventLoopGroup(Runtime.getRuntime().availableProcessors() * 2, "client-worker-group-%d");
 
     private final Endpoint endpoint;
+
+    private final Map<Long, Callback> context = Maps.newConcurrentMap();
 
     public Client(Endpoint endpoint) {
         this.endpoint = endpoint;
@@ -46,7 +51,8 @@ public class Client implements Initializer {
     /**
      * invoke in one way method
      *
-     * @param req       req entity
+     * @param req       request entity
+     * @param cTimeout  connection timeout
      * @param soTimeout socket timeout in milliseconds
      */
     public void invokeOneWay(KvaftMessage<?> req, int cTimeout, int soTimeout) {
@@ -82,18 +88,45 @@ public class Client implements Initializer {
      *
      * @param req      request
      * @param cTimeout connection timeout
-     * @param promise  future listener
+     * @param callback  future listener
      */
-    public void invokeWithPromise(KvaftMessage<?> req, int cTimeout, ChannelFutureListener promise) {
+    public void invokeWithCallback(KvaftMessage<?> req, int cTimeout, int soTimeout, Callback callback) {
         ensureInitialize();
         final Channel channel = createChannel(cTimeout);
         Assert.notNull(channel, "channel future could not be null");
+        long begin = System.currentTimeMillis();
         try {
+            // put callback function into context
+            context.put(req.requestId(), callback);
             // tips: channel.writeAndFlush is thread-safe
-            channel.writeAndFlush(req).addListener(promise);
+            channel.writeAndFlush(req).addListener(
+                    (ChannelFutureListener) future -> {
+                        while (!future.isDone() && System.currentTimeMillis() - begin <= soTimeout) {
+                            Thread.sleep(1000);
+                        }
+                        if (!future.isDone()) {
+                            log.error("rpc request socket timeout in {} ms.", soTimeout);
+                            return;
+                        }
+                        if (!future.isSuccess()) {
+                            log.error("rpc request failed.", future.cause());
+
+                        }
+                        log.info("rpc request successfully.");
+                    }
+            );
         } finally {
             channelPool.release(channel);
         }
+    }
+
+    /**
+     * get current context
+     *
+     * @return
+     */
+    public Map<Long, Callback> getClientContext() {
+        return context;
     }
 
     /**

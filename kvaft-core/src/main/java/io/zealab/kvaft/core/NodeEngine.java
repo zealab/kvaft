@@ -1,14 +1,15 @@
 package io.zealab.kvaft.core;
 
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.netty.channel.Channel;
 import io.zealab.kvaft.config.CommonConfig;
 import io.zealab.kvaft.config.GlobalScanner;
 import io.zealab.kvaft.rpc.ChannelProcessorManager;
 import io.zealab.kvaft.rpc.NioServer;
-import io.zealab.kvaft.rpc.client.ReplicatorManager;
 import io.zealab.kvaft.rpc.client.Stub;
 import io.zealab.kvaft.rpc.client.StubImpl;
+import io.zealab.kvaft.rpc.protoc.KvaftMessage;
+import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 import io.zealab.kvaft.util.Assert;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
@@ -20,10 +21,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -45,20 +43,20 @@ public class NodeEngine implements Node {
 
     private NioServer server;
 
-    private AtomicLong term = new AtomicLong(0L);
+    private final AtomicLong term = new AtomicLong(0L);
 
     private volatile Participant leader;
 
-    private ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private Set<String> ackQueue = Sets.newConcurrentHashSet();
+    private final NodeContext context = new NodeContext();
 
     private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
 
-    private final static ReplicatorManager replicatorManager = ReplicatorManager.getInstance();
-
     private final static ExecutorService asyncExecutor = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2, 30 * 10, TimeUnit.SECONDS,
+            Runtime.getRuntime().availableProcessors() * 2,
+            Runtime.getRuntime().availableProcessors() * 2,
+            30 * 10, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(2 << 16),
             new ThreadFactoryBuilder().setNameFormat("node-engine-async-%d").build(),
             new ThreadPoolExecutor.AbortPolicy()
@@ -91,9 +89,30 @@ public class NodeEngine implements Node {
         return leader;
     }
 
+    /**
+     * It will authorize when the follow two conditions satisfied:
+     *
+     * 1. Term which the peer offers must greater than or equal current term;
+     * 2. Only one of all requests in the same term will be authorized.
+     *
+     * @param peer client
+     * @param offerTerm offer term
+     */
     @Override
-    public void handlePreVoteRequest(Peer peer, long term) {
-        //TODO
+    public void handlePreVoteRequest(Peer peer, long requestId, long offerTerm) {
+        Channel channel = peer.getChannel();
+        boolean authorized = false;
+        synchronized (term) {
+            long currTerm = currTerm();
+            if (currTerm <= offerTerm && context.getTermAcked() < offerTerm) {
+                term.set(offerTerm);
+                context.setTermAcked(offerTerm);
+                authorized = true;
+            }
+        }
+        RemoteCalls.PreVoteAck preVoteAck = RemoteCalls.PreVoteAck.newBuilder().setAuthorized(authorized).build();
+        KvaftMessage<RemoteCalls.PreVoteAck> kvaftMessage = KvaftMessage.<RemoteCalls.PreVoteAck>builder().payload(preVoteAck).requestId(requestId).build();
+        channel.writeAndFlush(kvaftMessage);
     }
 
     @Override
@@ -105,9 +124,9 @@ public class NodeEngine implements Node {
         scanner.init();
         // binding node
         processManager.bindNode(this);
-        replicatorManager.bindNode(this);
         // starting rpc server
-        server = new NioServer(commonConfig.getBindEndpoint().getIp(), commonConfig.getBindEndpoint().getPort());
+        Endpoint bindAddress = commonConfig.getBindEndpoint();
+        server = new NioServer(bindAddress.getIp(), bindAddress.getPort());
         server.init();
     }
 
@@ -129,7 +148,7 @@ public class NodeEngine implements Node {
      * starting a pre vote timeout task
      */
     public void startPreVoteSpinTask(long term) {
-        asyncExecutor.execute(new PreVoteSpinTask(term));
+        asyncExecutor.execute(new PreVoteConfirmingTask(term));
     }
 
     public void setConfigFileLocation(String location) {
@@ -195,29 +214,60 @@ public class NodeEngine implements Node {
                 log.error("SleepTimeoutTask was interrupted", e);
             }
             if (leader == null) {
-                long termVal = term.incrementAndGet();
-                log.info("start to broadcast preVote msg to the other participants");
+                long termVal;
+                synchronized (term) {
+                    termVal = term.incrementAndGet();
+                }
+                log.info("start to broadcast pre voting msg to the other participants");
                 // not decide which node is leader
+                context.getPreVoteConfirmQueue().updateTerm(termVal);
                 List<Participant> participants = commonConfig.getParticipants();
+                // starting to check pre vote acknowledges
+                startPreVoteSpinTask(termVal);
                 participants.parallelStream().filter(e -> !e.isOntology()).forEach(
                         p -> {
                             Endpoint endpoint = p.getEndpoint();
-                            stub.preVoteReq(endpoint, termVal);
+                            Future<RemoteCalls.PreVoteAck> future = stub.preVoteReq(endpoint, termVal);
+                            // Waiting for pre vote acknowledges from other participants
+                            for (int i = 0; i < commonConfig.getPreVoteAckRetry(); i++) {
+                                if (future.isDone()) {
+                                    break;
+                                }
+                                // sleep for a second
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    log.error("Checking future was interrupted");
+                                }
+                            }
+                            try {
+                                if (future.isDone()) {
+                                    RemoteCalls.PreVoteAck ack = future.get();
+                                    log.info("PreVote acknowledge endpoint={},content={}", endpoint.toString(), ack.toString());
+                                    if (ack.getAuthorized()) {
+                                        context.getPreVoteConfirmQueue().addSignalIfNx(endpoint, termVal);
+                                    }
+                                } else {
+                                    log.info("it's timeout for waiting response");
+                                }
+                            } catch (InterruptedException | ExecutionException e) {
+                                log.error("There're some problems when retrieving result from the preVoteAck", e.getCause());
+                            }
                         }
                 );
-                startPreVoteSpinTask(termVal);
             }
+
         }
     }
 
     /**
      * spin check for preVote ack info
      */
-    public class PreVoteSpinTask implements Runnable {
+    public class PreVoteConfirmingTask implements Runnable {
 
         private final long term;
 
-        public PreVoteSpinTask(long term) {
+        public PreVoteConfirmingTask(long term) {
             this.term = term;
         }
 
@@ -227,12 +277,18 @@ public class NodeEngine implements Node {
             while (System.currentTimeMillis() - begin < commonConfig.getPreVoteSpin()) {
                 int quorum = (commonConfig.getParticipants().size() + 1) / 2 + 1;
                 long currTerm = currTerm();
-                if (currTerm == term && ackQueue.size() >= quorum) {
+                if (currTerm == term && context.getPreVoteConfirmQueue().size() >= quorum) {
                     electSelfNode();
                     return;
                 }
+                // sleep for a second
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.error("PreVoteConfirmingTask was interrupted");
+                }
             }
-            log.warn("PreVoteSpinTask timeout in {} seconds", commonConfig.getPreVoteSpin());
+            log.warn("PreVoteConfirmingTask timeout in {} ms", commonConfig.getPreVoteSpin());
             startSleepTimeoutTask();
         }
     }

@@ -36,8 +36,9 @@ public interface Node extends Initializer {
     /**
      * preVote request handle method
      *
-     * @param peer client
-     * @param term offer term
+     * @param peer       client
+     * @param requestId  requestId
+     * @param term       offer term
      */
-    void handlePreVoteRequest(Peer peer, long term);
+    void handlePreVoteRequest(Peer peer, long requestId, long term);
 }

@@ -21,7 +21,12 @@ public class CommonConfig {
     private Endpoint bindEndpoint = Endpoint.builder().ip("0.0.0.0").port(2046).build();
 
     /**
-     * 5s timeout for preVote local spin check
+     * 10000 ms timeout for preVote local spin check
      */
-    private int preVoteSpin = 5;
+    private int preVoteSpin = 10000;
+
+    /**
+     * retry times for pre vote ack
+     */
+    private int preVoteAckRetry = 10;
 }
