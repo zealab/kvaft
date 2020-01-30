@@ -144,13 +144,13 @@ public class Client implements Initializer {
         try {
             return channelFuture.get(cTimeout, TimeUnit.MILLISECONDS);
         } catch (CancellationException e) {
-            log.error("rpc connection was cancelled.", e);
+            log.error("rpc connection was cancelled.");
         } catch (InterruptedException e) {
-            log.error("rpc connection was interrupted.", e);
+            log.error("rpc connection was interrupted.");
         } catch (ExecutionException e) {
-            log.error("rpc connection execution has an error ", e);
+            log.error("rpc connection execution has an error ");
         } catch (TimeoutException e) {
-            log.error(String.format("rpc connection timeout in %d ms", cTimeout), e);
+            log.error(String.format("rpc connection timeout in %d ms", cTimeout));
         }
         return null;
     }

@@ -39,7 +39,10 @@ public class ResponseProcessor extends AbstractProcessor {
         Optional.ofNullable(
                 context.get(msg.requestId())
         ).ifPresent(
-                callback -> callback.apply(payload)
+                callback -> {
+                    context.remove(msg.requestId());
+                    callback.apply(payload);
+                }
         );
     }
 }

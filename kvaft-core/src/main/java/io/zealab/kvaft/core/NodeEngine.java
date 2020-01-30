@@ -135,6 +135,7 @@ public class NodeEngine implements Node {
      */
     public void electSelfNode() {
         // TODO
+        log.info("Leader election starting...");
     }
 
     /**
@@ -227,20 +228,20 @@ public class NodeEngine implements Node {
                 participants.parallelStream().filter(e -> !e.isOntology()).forEach(
                         p -> {
                             Endpoint endpoint = p.getEndpoint();
-                            Future<RemoteCalls.PreVoteAck> future = stub.preVoteReq(endpoint, termVal);
-                            // Waiting for pre vote acknowledges from other participants
-                            for (int i = 0; i < commonConfig.getPreVoteAckRetry(); i++) {
-                                if (future.isDone()) {
-                                    break;
-                                }
-                                // sleep for a second
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    log.error("Checking future was interrupted");
-                                }
-                            }
                             try {
+                                Future<RemoteCalls.PreVoteAck> future = stub.preVoteReq(endpoint, termVal);
+                                // Waiting for pre vote acknowledges from other participants
+                                for (int i = 0; i < commonConfig.getPreVoteAckRetry(); i++) {
+                                    if (future.isDone()) {
+                                        break;
+                                    }
+                                    // sleep for a second
+                                    try {
+                                        Thread.sleep(1000);
+                                    } catch (InterruptedException e) {
+                                        log.error("Checking future was interrupted");
+                                    }
+                                }
                                 if (future.isDone()) {
                                     RemoteCalls.PreVoteAck ack = future.get();
                                     log.info("PreVote acknowledge endpoint={},content={}", endpoint.toString(), ack.toString());
@@ -250,8 +251,8 @@ public class NodeEngine implements Node {
                                 } else {
                                     log.info("it's timeout for waiting response");
                                 }
-                            } catch (InterruptedException | ExecutionException e) {
-                                log.error("There're some problems when retrieving result from the preVoteAck", e.getCause());
+                            } catch (Exception e) {
+                                log.error("There're some problems when retrieving result from the preVoteAck, endpoint={}", endpoint.toString());
                             }
                         }
                 );
@@ -275,9 +276,9 @@ public class NodeEngine implements Node {
         public void run() {
             long begin = System.currentTimeMillis();
             while (System.currentTimeMillis() - begin < commonConfig.getPreVoteSpin()) {
-                int quorum = (commonConfig.getParticipants().size() + 1) / 2 + 1;
+                int quorum = commonConfig.getParticipants().size() / 2 + 1;
                 long currTerm = currTerm();
-                if (currTerm == term && context.getPreVoteConfirmQueue().size() >= quorum) {
+                if (currTerm == term && context.getPreVoteConfirmQueue().size() + 1 >= quorum) {
                     electSelfNode();
                     return;
                 }

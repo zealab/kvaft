@@ -54,6 +54,7 @@ public class SignalQueue {
     public void addSignalIfNx(Endpoint endpoint, long term) {
         Lock wLock = rwLock.writeLock();
         try {
+            wLock.lock();
             if (this.term == term && !signals.contains(endpoint.toString())) {
                 signals.add(endpoint.toString());
             }
@@ -70,6 +71,7 @@ public class SignalQueue {
     public int size() {
         Lock rLock = rwLock.readLock();
         try {
+            rLock.lock();
             return signals.size();
         } finally {
             rLock.unlock();
