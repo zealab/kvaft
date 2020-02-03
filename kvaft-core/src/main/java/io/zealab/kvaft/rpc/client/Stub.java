@@ -20,5 +20,13 @@ public interface Stub {
      * @param endpoint toWhere
      * @param term     currTerm
      */
-    Future<RemoteCalls.PreVoteAck> preVoteReq(Endpoint endpoint, long term);
+    Future<RemoteCalls.PreVoteAck> preVote(Endpoint endpoint, long term);
+
+    /**
+     * acquire leader information
+     *
+     * @param endpoint
+     * @return
+     */
+    Future<RemoteCalls.AcquireLeaderResp> acquireLeader(Endpoint endpoint);
 }

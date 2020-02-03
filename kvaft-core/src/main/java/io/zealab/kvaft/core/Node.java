@@ -34,11 +34,17 @@ public interface Node extends Initializer {
     Participant leader();
 
     /**
-     * preVote request handle method
+     * It will authorize when the follow two conditions satisfied:
+     *
+     * 1. Term which the peer offers must greater than or equal current term;
+     * 2. Only one of all requests in the same term will be authorized;
+     * 3. Ensure that current node is NOT in the ELECTING and ELECTED state.
+     *
+     * When A has authorized B (B may be A itself) in the term X,
      *
      * @param peer       client
      * @param requestId  requestId
-     * @param term       offer term
+     * @param offerTerm  offer term
      */
-    void handlePreVoteRequest(Peer peer, long requestId, long term);
+    void handlePreVoteRequest(Peer peer, long requestId, long offerTerm);
 }

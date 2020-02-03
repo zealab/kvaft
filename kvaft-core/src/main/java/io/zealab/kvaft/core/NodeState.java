@@ -4,17 +4,19 @@ package io.zealab.kvaft.core;
  * @author LeonWong
  */
 public enum NodeState {
-    /**
-     * as leader
-     */
-    LEADER,
-    /**
-     * as follower
-     */
-    FOLLOWER,
 
     /**
-     * as candidate
+     * as a follower
      */
-    CANDIDATE;
+    FOLLOWING,
+
+    /**
+     * as a candidate who may become leader
+     */
+    ELECTING,
+
+    /**
+     * as a leader
+     */
+    ELECTED,
 }

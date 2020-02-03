@@ -29,4 +29,13 @@ public class CommonConfig {
      * retry times for pre vote ack
      */
     private int preVoteAckRetry = 10;
+
+    /**
+     * 2000 ms timeout for acquireLeader
+     */
+    private int acquireLeaderTimeout = 2000;
+
+    public boolean isValidParticipant(Participant p) {
+        return participants.contains(p);
+    }
 }

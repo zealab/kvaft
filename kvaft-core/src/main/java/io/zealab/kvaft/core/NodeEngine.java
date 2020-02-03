@@ -14,6 +14,7 @@ import io.zealab.kvaft.util.Assert;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * node engine core
@@ -46,6 +48,8 @@ public class NodeEngine implements Node {
     private final AtomicLong term = new AtomicLong(0L);
 
     private volatile Participant leader;
+
+    private volatile NodeState state = NodeState.FOLLOWING;
 
     private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
@@ -76,7 +80,10 @@ public class NodeEngine implements Node {
     @Override
     public void start() {
         server.start();
-        startSleepTimeoutTask();
+        Participant leader = acquireLeader();
+        if (leader == null) {
+            startSleepTimeoutTask();
+        }
     }
 
     @Override
@@ -95,6 +102,8 @@ public class NodeEngine implements Node {
      * 1. Term which the peer offers must greater than or equal current term;
      * 2. Only one of all requests in the same term will be authorized.
      *
+     * When A has authorized B in the term X
+     *
      * @param peer client
      * @param offerTerm offer term
      */
@@ -104,9 +113,13 @@ public class NodeEngine implements Node {
         boolean authorized = false;
         synchronized (term) {
             long currTerm = currTerm();
-            if (currTerm <= offerTerm && context.getTermAcked() < offerTerm) {
+            boolean doAuthorize = currTerm <= offerTerm
+                    && context.isAuthorizable(offerTerm)
+                    && state.compareTo(NodeState.ELECTING) < 0;
+            if (doAuthorize) {
                 term.set(offerTerm);
                 context.setTermAcked(offerTerm);
+                state = NodeState.ELECTING;
                 authorized = true;
             }
         }
@@ -136,6 +149,8 @@ public class NodeEngine implements Node {
     public void electSelfNode() {
         // TODO
         log.info("Leader election starting...");
+        state = NodeState.ELECTING;
+
     }
 
     /**
@@ -201,6 +216,43 @@ public class NodeEngine implements Node {
     }
 
     /**
+     * acquire for leader information
+     *
+     * if the leader itself is current node, alter current state into ELECTED
+     *
+     * @return leader
+     */
+    @Nullable
+    public Participant acquireLeader() {
+        Participant leader = null;
+        int quorum = context.getQuorum(commonConfig.getParticipants().size());
+        List<Participant> sub = commonConfig.getParticipants().stream().filter(e -> !e.isOntology()).collect(Collectors.toList()).subList(0, quorum);
+        for (Participant p : sub) {
+            Future<RemoteCalls.AcquireLeaderResp> respFuture = stub.acquireLeader(p.getEndpoint());
+            long start = System.currentTimeMillis();
+            while (!respFuture.isDone() && System.currentTimeMillis() - start < commonConfig.getAcquireLeaderTimeout()) {
+                // spin
+            }
+            if (!respFuture.isDone()) {
+                continue;
+            }
+            try {
+                RemoteCalls.AcquireLeaderResp resp = respFuture.get();
+                Endpoint endpoint = Endpoint.builder().ip(resp.getHost()).port(resp.getPort()).build();
+                Participant tmp = Participant.from(endpoint, false);
+                if (commonConfig.isValidParticipant(tmp)) {
+                    leader = tmp;
+                    state = NodeState.ELECTED;
+                }
+                break;
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("something's wrong with acquiring leader");
+            }
+        }
+        return leader;
+    }
+
+    /**
      * When the sleep thread task awake, it will broadcast preVote message to every node.
      */
     public class SleepTimeoutTask implements Runnable {
@@ -218,6 +270,9 @@ public class NodeEngine implements Node {
                 long termVal;
                 synchronized (term) {
                     termVal = term.incrementAndGet();
+                    if (context.isAuthorizable(termVal)) {
+                        context.setTermAcked(termVal);
+                    }
                 }
                 log.info("start to broadcast pre voting msg to the other participants");
                 // not decide which node is leader
@@ -229,7 +284,9 @@ public class NodeEngine implements Node {
                         p -> {
                             Endpoint endpoint = p.getEndpoint();
                             try {
-                                Future<RemoteCalls.PreVoteAck> future = stub.preVoteReq(endpoint, termVal);
+                                // vote for itself
+                                context.getPreVoteConfirmQueue().addSignalIfNx(commonConfig.getBindEndpoint(), termVal);
+                                Future<RemoteCalls.PreVoteAck> future = stub.preVote(endpoint, termVal);
                                 // Waiting for pre vote acknowledges from other participants
                                 for (int i = 0; i < commonConfig.getPreVoteAckRetry(); i++) {
                                     if (future.isDone()) {
@@ -276,9 +333,11 @@ public class NodeEngine implements Node {
         public void run() {
             long begin = System.currentTimeMillis();
             while (System.currentTimeMillis() - begin < commonConfig.getPreVoteSpin()) {
-                int quorum = commonConfig.getParticipants().size() / 2 + 1;
+                int quorum = context.getQuorum(commonConfig.getParticipants().size());
                 long currTerm = currTerm();
-                if (currTerm == term && context.getPreVoteConfirmQueue().size() + 1 >= quorum) {
+                int size = context.getPreVoteConfirmQueue().size();
+                if (currTerm == term && size >= quorum) {
+                    log.info("current term={}, confirm queue size={}", currTerm, size);
                     electSelfNode();
                     return;
                 }

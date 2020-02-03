@@ -72,14 +72,21 @@ public class NioServer implements Initializer {
     public void start() {
         executorService.execute(
                 () -> {
-                    try {
-                        log.info("netty server starting...");
-                        ChannelFuture future = bootstrap.bind(port).sync();
-                        if (future.isSuccess()) {
-                            log.info("netty server started host={},port={}", host, port);
+                    log.info("netty server starting...");
+                    ChannelFuture future = bootstrap.bind(port);
+                    while (!future.isDone()) {
+                        // ignore
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            log.error("starting netty server was interrupted");
                         }
-                    } catch (InterruptedException e) {
-                        log.error("do start netty server...");
+                    }
+                    if (future.isSuccess()) {
+                        log.info("netty server started host={},port={}", host, port);
+                    } else {
+                        log.error(String.format("failed to bind address host=%s,port=%d", host, port), future.cause());
+                        System.exit(1);
                     }
                 }
         );

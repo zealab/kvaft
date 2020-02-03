@@ -28,7 +28,7 @@ public class StubImpl implements Stub {
     }
 
     @Override
-    public Future<RemoteCalls.PreVoteAck> preVoteReq(Endpoint endpoint, long term) {
+    public Future<RemoteCalls.PreVoteAck> preVote(Endpoint endpoint, long term) {
         Client client = ClientFactory.getOrCreate(endpoint);
         RequestId requestId = RequestId.create();
         Assert.notNull(client, String.format("could not establish a connection with endpoint=%s", endpoint.toString()));
@@ -39,8 +39,27 @@ public class StubImpl implements Stub {
                 .build();
         SettableFuture<RemoteCalls.PreVoteAck> result = SettableFuture.create();
         client.invokeWithCallback(req, 1000, 1000, payload -> {
-            log.info("preVoteReq response={}", payload.toString());
+            log.info("preVote response={}", payload.toString());
             RemoteCalls.PreVoteAck ack = (RemoteCalls.PreVoteAck) payload;
+            result.set(ack);
+        });
+        return result;
+    }
+
+    @Override
+    public Future<RemoteCalls.AcquireLeaderResp> acquireLeader(Endpoint endpoint) {
+        Client client = ClientFactory.getOrCreate(endpoint);
+        RequestId requestId = RequestId.create();
+        Assert.notNull(client, String.format("could not establish a connection with endpoint=%s", endpoint.toString()));
+        RemoteCalls.AcquireLeaderReq leaderReq = RemoteCalls.AcquireLeaderReq.newBuilder().setTimestamp(requestId.getCreateTime()).build();
+        KvaftMessage<RemoteCalls.AcquireLeaderReq> req = KvaftMessage.<RemoteCalls.AcquireLeaderReq>builder()
+                .requestId(requestId.getValue())
+                .payload(leaderReq)
+                .build();
+        SettableFuture<RemoteCalls.AcquireLeaderResp> result = SettableFuture.create();
+        client.invokeWithCallback(req, 1000, 1000, payload -> {
+            log.info("acquireLeader response={}", payload.toString());
+            RemoteCalls.AcquireLeaderResp ack = (RemoteCalls.AcquireLeaderResp) payload;
             result.set(ack);
         });
         return result;
