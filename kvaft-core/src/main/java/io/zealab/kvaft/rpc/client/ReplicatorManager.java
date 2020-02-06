@@ -1,6 +1,5 @@
 package io.zealab.kvaft.rpc.client;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
