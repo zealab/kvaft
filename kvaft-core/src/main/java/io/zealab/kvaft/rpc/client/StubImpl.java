@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 public class StubImpl implements Stub {
 
     @Override
-    public void heartbeat(Endpoint endpoint) {
+    public Future<RemoteCalls.HeartbeatAck> heartbeat(Endpoint endpoint) {
         Client client = ClientFactory.getOrCreate(endpoint);
         RequestId requestId = RequestId.create();
         Assert.notNull(client, String.format("could not establish a connection with endpoint=%s", endpoint.toString()));
@@ -24,7 +24,13 @@ public class StubImpl implements Stub {
                 .requestId(requestId.getValue())
                 .payload(heartbeat)
                 .build();
-        client.invokeOneWay(req, 1000, 1000);
+        SettableFuture<RemoteCalls.HeartbeatAck> result = SettableFuture.create();
+        client.invokeWithCallback(req, 1000, 1000, payload -> {
+            log.info("preVote response={}", payload.toString());
+            RemoteCalls.HeartbeatAck ack = (RemoteCalls.HeartbeatAck) payload;
+            result.set(ack);
+        });
+        return result;
     }
 
     @Override
@@ -60,6 +66,26 @@ public class StubImpl implements Stub {
         client.invokeWithCallback(req, 1000, 1000, payload -> {
             log.info("acquireLeader response={}", payload.toString());
             RemoteCalls.AcquireLeaderResp ack = (RemoteCalls.AcquireLeaderResp) payload;
+            result.set(ack);
+        });
+        return result;
+    }
+
+    @Override
+    public Future<RemoteCalls.ElectResp> elect(Endpoint endpoint, long term) {
+        Client client = ClientFactory.getOrCreate(endpoint);
+        RequestId requestId = RequestId.create();
+        Assert.notNull(client, String.format("could not establish a connection with endpoint=%s", endpoint.toString()));
+        RemoteCalls.BindAddress address = RemoteCalls.BindAddress.newBuilder().setHost(endpoint.getIp()).setPort(endpoint.getPort()).build();
+        RemoteCalls.ElectReq electReq = RemoteCalls.ElectReq.newBuilder().setTerm(term).setAddress(address).build();
+        KvaftMessage<RemoteCalls.ElectReq> req = KvaftMessage.<RemoteCalls.ElectReq>builder()
+                .requestId(requestId.getValue())
+                .payload(electReq)
+                .build();
+        SettableFuture<RemoteCalls.ElectResp> result = SettableFuture.create();
+        client.invokeWithCallback(req, 1000, 1000, payload -> {
+            log.info("acquireLeader response={}", payload.toString());
+            RemoteCalls.ElectResp ack = (RemoteCalls.ElectResp) payload;
             result.set(ack);
         });
         return result;

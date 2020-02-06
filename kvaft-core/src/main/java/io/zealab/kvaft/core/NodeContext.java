@@ -7,10 +7,18 @@ public class NodeContext {
 
     private SignalQueue preVoteConfirmQueue = new SignalQueue();
 
+    private SignalQueue electionConfirmQueue = new SignalQueue();
+
     private long termAcked;
+
+    private volatile boolean heartbeatOn = false;
 
     public SignalQueue getPreVoteConfirmQueue() {
         return preVoteConfirmQueue;
+    }
+
+    public SignalQueue getElectionConfirmQueue() {
+        return electionConfirmQueue;
     }
 
     public long getTermAcked() {
@@ -29,6 +37,15 @@ public class NodeContext {
 
     public void setTermAcked(long termAcked) {
         this.termAcked = termAcked;
+    }
+
+    public boolean isHeartbeatOn() {
+        return heartbeatOn;
+    }
+
+    public NodeContext setHeartbeatOn(boolean heartbeatOn) {
+        this.heartbeatOn = heartbeatOn;
+        return this;
     }
 
     /**

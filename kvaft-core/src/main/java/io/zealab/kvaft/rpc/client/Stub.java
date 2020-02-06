@@ -12,7 +12,7 @@ public interface Stub {
      *
      * @param endpoint toWhere
      */
-    void heartbeat(Endpoint endpoint);
+    Future<RemoteCalls.HeartbeatAck> heartbeat(Endpoint endpoint);
 
     /**
      * pre vote req
@@ -29,4 +29,13 @@ public interface Stub {
      * @return
      */
     Future<RemoteCalls.AcquireLeaderResp> acquireLeader(Endpoint endpoint);
+
+    /**
+     * starting election
+     *
+     * @param endpoint
+     * @param term
+     * @return
+     */
+    Future<RemoteCalls.ElectResp> elect(Endpoint endpoint, long term);
 }

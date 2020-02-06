@@ -23,7 +23,7 @@ public class CommonConfig {
     /**
      * 10000 ms timeout for preVote local spin check
      */
-    private int preVoteSpin = 10000;
+    private int preVoteConfirmTimeout = 10000;
 
     /**
      * retry times for pre vote ack
@@ -34,6 +34,21 @@ public class CommonConfig {
      * 2000 ms timeout for acquireLeader
      */
     private int acquireLeaderTimeout = 2000;
+
+    /**
+     * 2000 ms timeout for election
+     */
+    private int electTimeout = 2000;
+
+    /**
+     * 10000 ms timeout for election confirming
+     */
+    private int electConfirmTimeout = 10000;
+
+    /**
+     * 5000 ms interval for heartbeat from leader to follower
+     */
+    private int heartbeatInterval = 5000;
 
     public boolean isValidParticipant(Participant p) {
         return participants.contains(p);

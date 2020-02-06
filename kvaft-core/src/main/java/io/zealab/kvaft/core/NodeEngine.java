@@ -6,6 +6,7 @@ import io.zealab.kvaft.config.CommonConfig;
 import io.zealab.kvaft.config.GlobalScanner;
 import io.zealab.kvaft.rpc.ChannelProcessorManager;
 import io.zealab.kvaft.rpc.NioServer;
+import io.zealab.kvaft.rpc.client.ReplicatorManager;
 import io.zealab.kvaft.rpc.client.Stub;
 import io.zealab.kvaft.rpc.client.StubImpl;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
@@ -57,6 +58,8 @@ public class NodeEngine implements Node {
 
     private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
 
+    private final static ReplicatorManager replicatorManager = ReplicatorManager.getInstance();
+
     private final static ExecutorService asyncExecutor = new ThreadPoolExecutor(
             Runtime.getRuntime().availableProcessors() * 2,
             Runtime.getRuntime().availableProcessors() * 2,
@@ -96,17 +99,6 @@ public class NodeEngine implements Node {
         return leader;
     }
 
-    /**
-     * It will authorize when the follow two conditions satisfied:
-     *
-     * 1. Term which the peer offers must greater than or equal current term;
-     * 2. Only one of all requests in the same term will be authorized.
-     *
-     * When A has authorized B in the term X
-     *
-     * @param peer client
-     * @param offerTerm offer term
-     */
     @Override
     public void handlePreVoteRequest(Peer peer, long requestId, long offerTerm) {
         Channel channel = peer.getChannel();
@@ -129,6 +121,35 @@ public class NodeEngine implements Node {
     }
 
     @Override
+    public void handleElectRequest(Peer peer, long requestId, long offerTerm) {
+        Channel channel = peer.getChannel();
+        boolean authorized = false;
+        synchronized (term) {
+            long currTerm = currTerm();
+            boolean doAuthorize = currTerm <= offerTerm
+                    && state.compareTo(NodeState.ELECTING) == 0;
+            if (doAuthorize) {
+                term.set(offerTerm);
+                state = NodeState.ELECTED;
+                authorized = true;
+            }
+        }
+        RemoteCalls.ElectResp electResp = RemoteCalls.ElectResp.newBuilder().setTerm(offerTerm).setAuthorized(authorized).build();
+        KvaftMessage<RemoteCalls.ElectResp> kvaftMessage = KvaftMessage.<RemoteCalls.ElectResp>builder().payload(electResp).requestId(requestId).build();
+        channel.writeAndFlush(kvaftMessage);
+    }
+
+    @Override
+    public void handleHeartbeat(Peer peer, long requestId, long offerTerm) {
+        Channel channel = peer.getChannel();
+        if (offerTerm == term.get() && state == NodeState.ELECTED) {
+            RemoteCalls.HeartbeatAck heartbeatAck = RemoteCalls.HeartbeatAck.newBuilder().setTimestamp(System.currentTimeMillis()).build();
+            KvaftMessage<RemoteCalls.HeartbeatAck> kvaftMessage = KvaftMessage.<RemoteCalls.HeartbeatAck>builder().payload(heartbeatAck).requestId(requestId).build();
+            channel.writeAndFlush(kvaftMessage);
+        }
+    }
+
+    @Override
     public void init() {
         // read the config file
         parseConfigFile();
@@ -146,11 +167,38 @@ public class NodeEngine implements Node {
     /**
      * begin to elect itself
      */
-    public void electSelfNode() {
-        // TODO
+    public void electItselfNode(final long term) {
         log.info("Leader election starting...");
         state = NodeState.ELECTING;
-
+        startElectionConfirmingTask();
+        context.getElectionConfirmQueue().updateTerm(term);
+        commonConfig.getParticipants()
+                .parallelStream()
+                .filter(e -> !e.isOntology())
+                .forEach(
+                        participant -> {
+                            try {
+                                Future<RemoteCalls.ElectResp> respFuture = stub.elect(participant.getEndpoint(), term);
+                                long begin = System.currentTimeMillis();
+                                while (!respFuture.isDone() && System.currentTimeMillis() - begin < commonConfig.getElectTimeout()) {
+                                    // ignore it
+                                }
+                                if (respFuture.isDone()) {
+                                    try {
+                                        RemoteCalls.ElectResp resp = respFuture.get();
+                                        if (resp.getAuthorized()
+                                                && term == resp.getTerm()) {
+                                            context.getElectionConfirmQueue().addSignalIfNx(participant.getEndpoint(), term);
+                                        }
+                                    } catch (InterruptedException | ExecutionException e) {
+                                        log.error("electing itself response failed");
+                                    }
+                                }
+                            } catch (Exception e) {
+                                log.error("broadcast electing message failed", e);
+                            }
+                        }
+                );
     }
 
     /**
@@ -158,6 +206,28 @@ public class NodeEngine implements Node {
      */
     public void startSleepTimeoutTask() {
         asyncExecutor.execute(new SleepTimeoutTask());
+    }
+
+    /**
+     * starting a heartbeat task
+     */
+    public void startHeartbeatTask() {
+        context.setHeartbeatOn(true);
+        asyncExecutor.execute(new HeartbeatTask());
+    }
+
+    /**
+     * canceling heartbeat task
+     */
+    public void cancelHeartbeatTask() {
+        context.setHeartbeatOn(false);
+    }
+
+    /**
+     * starting a election confirming task
+     */
+    public void startElectionConfirmingTask() {
+        asyncExecutor.execute(new ElectionConfirmingTask());
     }
 
     /**
@@ -238,11 +308,12 @@ public class NodeEngine implements Node {
             }
             try {
                 RemoteCalls.AcquireLeaderResp resp = respFuture.get();
-                Endpoint endpoint = Endpoint.builder().ip(resp.getHost()).port(resp.getPort()).build();
-                Participant tmp = Participant.from(endpoint, false);
+                RemoteCalls.BindAddress address = resp.getLeaderAddress();
+                Participant tmp = Participant.from(address, false);
                 if (commonConfig.isValidParticipant(tmp)) {
                     leader = tmp;
                     state = NodeState.ELECTED;
+                    term.set(resp.getTerm());
                 }
                 break;
             } catch (InterruptedException | ExecutionException e) {
@@ -332,13 +403,13 @@ public class NodeEngine implements Node {
         @Override
         public void run() {
             long begin = System.currentTimeMillis();
-            while (System.currentTimeMillis() - begin < commonConfig.getPreVoteSpin()) {
-                int quorum = context.getQuorum(commonConfig.getParticipants().size());
-                long currTerm = currTerm();
+            long currTerm = currTerm();
+            int quorum = context.getQuorum(commonConfig.getParticipants().size());
+            while (System.currentTimeMillis() - begin < commonConfig.getPreVoteConfirmTimeout()) {
                 int size = context.getPreVoteConfirmQueue().size();
                 if (currTerm == term && size >= quorum) {
                     log.info("current term={}, confirm queue size={}", currTerm, size);
-                    electSelfNode();
+                    electItselfNode(currTerm);
                     return;
                 }
                 // sleep for a second
@@ -348,8 +419,74 @@ public class NodeEngine implements Node {
                     log.error("PreVoteConfirmingTask was interrupted");
                 }
             }
-            log.warn("PreVoteConfirmingTask timeout in {} ms", commonConfig.getPreVoteSpin());
+            log.warn("PreVoteConfirmingTask timeout in {} ms", commonConfig.getPreVoteConfirmTimeout());
             startSleepTimeoutTask();
+        }
+    }
+
+    /**
+     * confirm check for election stage
+     */
+    public class ElectionConfirmingTask implements Runnable {
+
+        @Override
+        public void run() {
+            long begin = System.currentTimeMillis();
+            int quorum = context.getQuorum(commonConfig.getParticipants().size());
+            while (System.currentTimeMillis() - begin < commonConfig.getElectConfirmTimeout()) {
+                int size = context.getElectionConfirmQueue().size();
+                if (size >= quorum) {
+                    log.info("election confirm queue size={}", size);
+                    state = NodeState.ELECTED;
+                    leader = Participant.from(commonConfig.getBindEndpoint(), true);
+                    // starting heartbeat task
+                    startHeartbeatTask();
+                    return;
+                }
+                // sleep for a second
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.error("ElectionConfirmingTask was interrupted");
+                }
+            }
+            log.warn("ElectionConfirmingTask timeout in {} ms", commonConfig.getElectConfirmTimeout());
+            startSleepTimeoutTask();
+        }
+    }
+
+    public class HeartbeatTask implements Runnable {
+
+        private final int timeout = 5000;
+
+        @Override
+        public void run() {
+            while (context.isHeartbeatOn()) {
+                long begin = System.currentTimeMillis();
+                commonConfig.getParticipants().parallelStream().filter(e -> !e.isOntology()).forEach(
+                        p -> {
+                            Future<RemoteCalls.HeartbeatAck> ackFuture = stub.heartbeat(p.getEndpoint());
+                            while (!ackFuture.isDone() && System.currentTimeMillis() - begin < timeout) {
+                                // spin
+                            }
+                            if (ackFuture.isDone()) {
+                                try {
+                                    ackFuture.get();
+                                } catch (InterruptedException | ExecutionException e) {
+                                    log.error("Heartbeat future get failed ,endpoint={}", p.getEndpoint().toString());
+                                }
+                            } else {
+                                replicatorManager.removeReplicator(p.getEndpoint());
+                                log.error("Session timeout in {} ms, endpoint={}, this replicator would be removed by replicator manager", timeout, p.getEndpoint().toString());
+                            }
+                        }
+                );
+                try {
+                    Thread.sleep(commonConfig.getHeartbeatInterval());
+                } catch (InterruptedException e) {
+                    log.error("HeartbeatTask sleeping thread was interrupted");
+                }
+            }
         }
     }
 }

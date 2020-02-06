@@ -14,12 +14,652 @@ public final class RemoteCalls {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+  public interface BindAddressOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:io.zealab.kvaft.rpc.protoc.BindAddress)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string host = 1;</code>
+     * @return The host.
+     */
+    java.lang.String getHost();
+    /**
+     * <code>string host = 1;</code>
+     * @return The bytes for host.
+     */
+    com.google.protobuf.ByteString
+        getHostBytes();
+
+    /**
+     * <code>int32 port = 2;</code>
+     * @return The port.
+     */
+    int getPort();
+  }
+  /**
+   * Protobuf type {@code io.zealab.kvaft.rpc.protoc.BindAddress}
+   */
+  public  static final class BindAddress extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:io.zealab.kvaft.rpc.protoc.BindAddress)
+      BindAddressOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use BindAddress.newBuilder() to construct.
+    private BindAddress(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private BindAddress() {
+      host_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new BindAddress();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private BindAddress(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              host_ = s;
+              break;
+            }
+            case 16: {
+
+              port_ = input.readInt32();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder.class);
+    }
+
+    public static final int HOST_FIELD_NUMBER = 1;
+    private volatile java.lang.Object host_;
+    /**
+     * <code>string host = 1;</code>
+     * @return The host.
+     */
+    public java.lang.String getHost() {
+      java.lang.Object ref = host_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        host_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string host = 1;</code>
+     * @return The bytes for host.
+     */
+    public com.google.protobuf.ByteString
+        getHostBytes() {
+      java.lang.Object ref = host_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        host_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PORT_FIELD_NUMBER = 2;
+    private int port_;
+    /**
+     * <code>int32 port = 2;</code>
+     * @return The port.
+     */
+    public int getPort() {
+      return port_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getHostBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, host_);
+      }
+      if (port_ != 0) {
+        output.writeInt32(2, port_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getHostBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, host_);
+      }
+      if (port_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, port_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress)) {
+        return super.equals(obj);
+      }
+      io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress other = (io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress) obj;
+
+      if (!getHost()
+          .equals(other.getHost())) return false;
+      if (getPort()
+          != other.getPort()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + HOST_FIELD_NUMBER;
+      hash = (53 * hash) + getHost().hashCode();
+      hash = (37 * hash) + PORT_FIELD_NUMBER;
+      hash = (53 * hash) + getPort();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code io.zealab.kvaft.rpc.protoc.BindAddress}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:io.zealab.kvaft.rpc.protoc.BindAddress)
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder.class);
+      }
+
+      // Construct using io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        host_ = "";
+
+        port_ = 0;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_descriptor;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getDefaultInstanceForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress build() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress buildPartial() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress result = new io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress(this);
+        result.host_ = host_;
+        result.port_ = port_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress) {
+          return mergeFrom((io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress other) {
+        if (other == io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance()) return this;
+        if (!other.getHost().isEmpty()) {
+          host_ = other.host_;
+          onChanged();
+        }
+        if (other.getPort() != 0) {
+          setPort(other.getPort());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object host_ = "";
+      /**
+       * <code>string host = 1;</code>
+       * @return The host.
+       */
+      public java.lang.String getHost() {
+        java.lang.Object ref = host_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          host_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string host = 1;</code>
+       * @return The bytes for host.
+       */
+      public com.google.protobuf.ByteString
+          getHostBytes() {
+        java.lang.Object ref = host_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          host_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string host = 1;</code>
+       * @param value The host to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHost(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        host_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string host = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearHost() {
+        
+        host_ = getDefaultInstance().getHost();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string host = 1;</code>
+       * @param value The bytes for host to set.
+       * @return This builder for chaining.
+       */
+      public Builder setHostBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        host_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int port_ ;
+      /**
+       * <code>int32 port = 2;</code>
+       * @return The port.
+       */
+      public int getPort() {
+        return port_;
+      }
+      /**
+       * <code>int32 port = 2;</code>
+       * @param value The port to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPort(int value) {
+        
+        port_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 port = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPort() {
+        
+        port_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:io.zealab.kvaft.rpc.protoc.BindAddress)
+    }
+
+    // @@protoc_insertion_point(class_scope:io.zealab.kvaft.rpc.protoc.BindAddress)
+    private static final io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress();
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<BindAddress>
+        PARSER = new com.google.protobuf.AbstractParser<BindAddress>() {
+      @java.lang.Override
+      public BindAddress parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new BindAddress(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<BindAddress> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<BindAddress> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface HeartbeatOrBuilder extends
       // @@protoc_insertion_point(interface_extends:io.zealab.kvaft.rpc.protoc.Heartbeat)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>int64 timestamp = 1;</code>
+     * <code>int64 term = 1;</code>
+     * @return The term.
+     */
+    long getTerm();
+
+    /**
+     * <code>int64 timestamp = 2;</code>
      * @return The timestamp.
      */
     long getTimestamp();
@@ -71,6 +711,11 @@ public final class RemoteCalls {
               break;
             case 8: {
 
+              term_ = input.readInt64();
+              break;
+            }
+            case 16: {
+
               timestamp_ = input.readInt64();
               break;
             }
@@ -106,10 +751,20 @@ public final class RemoteCalls {
               io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat.Builder.class);
     }
 
-    public static final int TIMESTAMP_FIELD_NUMBER = 1;
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
+    /**
+     * <code>int64 term = 1;</code>
+     * @return The term.
+     */
+    public long getTerm() {
+      return term_;
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 2;
     private long timestamp_;
     /**
-     * <code>int64 timestamp = 1;</code>
+     * <code>int64 timestamp = 2;</code>
      * @return The timestamp.
      */
     public long getTimestamp() {
@@ -130,8 +785,11 @@ public final class RemoteCalls {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (term_ != 0L) {
+        output.writeInt64(1, term_);
+      }
       if (timestamp_ != 0L) {
-        output.writeInt64(1, timestamp_);
+        output.writeInt64(2, timestamp_);
       }
       unknownFields.writeTo(output);
     }
@@ -142,9 +800,13 @@ public final class RemoteCalls {
       if (size != -1) return size;
 
       size = 0;
+      if (term_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, term_);
+      }
       if (timestamp_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(1, timestamp_);
+          .computeInt64Size(2, timestamp_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -161,6 +823,8 @@ public final class RemoteCalls {
       }
       io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat other = (io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat) obj;
 
+      if (getTerm()
+          != other.getTerm()) return false;
       if (getTimestamp()
           != other.getTimestamp()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
@@ -174,6 +838,9 @@ public final class RemoteCalls {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TERM_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTerm());
       hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getTimestamp());
@@ -310,6 +977,8 @@ public final class RemoteCalls {
       @java.lang.Override
       public Builder clear() {
         super.clear();
+        term_ = 0L;
+
         timestamp_ = 0L;
 
         return this;
@@ -338,6 +1007,7 @@ public final class RemoteCalls {
       @java.lang.Override
       public io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat buildPartial() {
         io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat result = new io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat(this);
+        result.term_ = term_;
         result.timestamp_ = timestamp_;
         onBuilt();
         return result;
@@ -387,6 +1057,9 @@ public final class RemoteCalls {
 
       public Builder mergeFrom(io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat other) {
         if (other == io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat.getDefaultInstance()) return this;
+        if (other.getTerm() != 0L) {
+          setTerm(other.getTerm());
+        }
         if (other.getTimestamp() != 0L) {
           setTimestamp(other.getTimestamp());
         }
@@ -419,16 +1092,46 @@ public final class RemoteCalls {
         return this;
       }
 
+      private long term_ ;
+      /**
+       * <code>int64 term = 1;</code>
+       * @return The term.
+       */
+      public long getTerm() {
+        return term_;
+      }
+      /**
+       * <code>int64 term = 1;</code>
+       * @param value The term to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTerm(long value) {
+        
+        term_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 term = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTerm() {
+        
+        term_ = 0L;
+        onChanged();
+        return this;
+      }
+
       private long timestamp_ ;
       /**
-       * <code>int64 timestamp = 1;</code>
+       * <code>int64 timestamp = 2;</code>
        * @return The timestamp.
        */
       public long getTimestamp() {
         return timestamp_;
       }
       /**
-       * <code>int64 timestamp = 1;</code>
+       * <code>int64 timestamp = 2;</code>
        * @param value The timestamp to set.
        * @return This builder for chaining.
        */
@@ -439,7 +1142,7 @@ public final class RemoteCalls {
         return this;
       }
       /**
-       * <code>int64 timestamp = 1;</code>
+       * <code>int64 timestamp = 2;</code>
        * @return This builder for chaining.
        */
       public Builder clearTimestamp() {
@@ -496,6 +1199,493 @@ public final class RemoteCalls {
 
     @java.lang.Override
     public io.zealab.kvaft.rpc.protoc.RemoteCalls.Heartbeat getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface HeartbeatAckOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:io.zealab.kvaft.rpc.protoc.HeartbeatAck)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 timestamp = 1;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code io.zealab.kvaft.rpc.protoc.HeartbeatAck}
+   */
+  public  static final class HeartbeatAck extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:io.zealab.kvaft.rpc.protoc.HeartbeatAck)
+      HeartbeatAckOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use HeartbeatAck.newBuilder() to construct.
+    private HeartbeatAck(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private HeartbeatAck() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new HeartbeatAck();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private HeartbeatAck(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              timestamp_ = input.readInt64();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck.Builder.class);
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 1;
+    private long timestamp_;
+    /**
+     * <code>int64 timestamp = 1;</code>
+     * @return The timestamp.
+     */
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (timestamp_ != 0L) {
+        output.writeInt64(1, timestamp_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, timestamp_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck)) {
+        return super.equals(obj);
+      }
+      io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck other = (io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck) obj;
+
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code io.zealab.kvaft.rpc.protoc.HeartbeatAck}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:io.zealab.kvaft.rpc.protoc.HeartbeatAck)
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAckOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck.Builder.class);
+      }
+
+      // Construct using io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        timestamp_ = 0L;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_descriptor;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck getDefaultInstanceForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck build() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck buildPartial() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck result = new io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck(this);
+        result.timestamp_ = timestamp_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck) {
+          return mergeFrom((io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck other) {
+        if (other == io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck.getDefaultInstance()) return this;
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 1;</code>
+       * @return The timestamp.
+       */
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 1;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:io.zealab.kvaft.rpc.protoc.HeartbeatAck)
+    }
+
+    // @@protoc_insertion_point(class_scope:io.zealab.kvaft.rpc.protoc.HeartbeatAck)
+    private static final io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck();
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<HeartbeatAck>
+        PARSER = new com.google.protobuf.AbstractParser<HeartbeatAck>() {
+      @java.lang.Override
+      public HeartbeatAck parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new HeartbeatAck(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<HeartbeatAck> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<HeartbeatAck> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.HeartbeatAck getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -2036,22 +3226,25 @@ public final class RemoteCalls {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>string host = 1;</code>
-     * @return The host.
+     * <code>int64 term = 1;</code>
+     * @return The term.
      */
-    java.lang.String getHost();
-    /**
-     * <code>string host = 1;</code>
-     * @return The bytes for host.
-     */
-    com.google.protobuf.ByteString
-        getHostBytes();
+    long getTerm();
 
     /**
-     * <code>int32 port = 2;</code>
-     * @return The port.
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+     * @return Whether the leaderAddress field is set.
      */
-    int getPort();
+    boolean hasLeaderAddress();
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+     * @return The leaderAddress.
+     */
+    io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getLeaderAddress();
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+     */
+    io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder getLeaderAddressOrBuilder();
   }
   /**
    * Protobuf type {@code io.zealab.kvaft.rpc.protoc.AcquireLeaderResp}
@@ -2066,7 +3259,6 @@ public final class RemoteCalls {
       super(builder);
     }
     private AcquireLeaderResp() {
-      host_ = "";
     }
 
     @java.lang.Override
@@ -2099,15 +3291,22 @@ public final class RemoteCalls {
             case 0:
               done = true;
               break;
-            case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
+            case 8: {
 
-              host_ = s;
+              term_ = input.readInt64();
               break;
             }
-            case 16: {
+            case 18: {
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder subBuilder = null;
+              if (leaderAddress_ != null) {
+                subBuilder = leaderAddress_.toBuilder();
+              }
+              leaderAddress_ = input.readMessage(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(leaderAddress_);
+                leaderAddress_ = subBuilder.buildPartial();
+              }
 
-              port_ = input.readInt32();
               break;
             }
             default: {
@@ -2142,50 +3341,37 @@ public final class RemoteCalls {
               io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp.Builder.class);
     }
 
-    public static final int HOST_FIELD_NUMBER = 1;
-    private volatile java.lang.Object host_;
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
     /**
-     * <code>string host = 1;</code>
-     * @return The host.
+     * <code>int64 term = 1;</code>
+     * @return The term.
      */
-    public java.lang.String getHost() {
-      java.lang.Object ref = host_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        host_ = s;
-        return s;
-      }
-    }
-    /**
-     * <code>string host = 1;</code>
-     * @return The bytes for host.
-     */
-    public com.google.protobuf.ByteString
-        getHostBytes() {
-      java.lang.Object ref = host_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        host_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public long getTerm() {
+      return term_;
     }
 
-    public static final int PORT_FIELD_NUMBER = 2;
-    private int port_;
+    public static final int LEADERADDRESS_FIELD_NUMBER = 2;
+    private io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress leaderAddress_;
     /**
-     * <code>int32 port = 2;</code>
-     * @return The port.
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+     * @return Whether the leaderAddress field is set.
      */
-    public int getPort() {
-      return port_;
+    public boolean hasLeaderAddress() {
+      return leaderAddress_ != null;
+    }
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+     * @return The leaderAddress.
+     */
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getLeaderAddress() {
+      return leaderAddress_ == null ? io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance() : leaderAddress_;
+    }
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+     */
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder getLeaderAddressOrBuilder() {
+      return getLeaderAddress();
     }
 
     private byte memoizedIsInitialized = -1;
@@ -2202,11 +3388,11 @@ public final class RemoteCalls {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!getHostBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, host_);
+      if (term_ != 0L) {
+        output.writeInt64(1, term_);
       }
-      if (port_ != 0) {
-        output.writeInt32(2, port_);
+      if (leaderAddress_ != null) {
+        output.writeMessage(2, getLeaderAddress());
       }
       unknownFields.writeTo(output);
     }
@@ -2217,12 +3403,13 @@ public final class RemoteCalls {
       if (size != -1) return size;
 
       size = 0;
-      if (!getHostBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, host_);
-      }
-      if (port_ != 0) {
+      if (term_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, port_);
+          .computeInt64Size(1, term_);
+      }
+      if (leaderAddress_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getLeaderAddress());
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -2239,10 +3426,13 @@ public final class RemoteCalls {
       }
       io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp other = (io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp) obj;
 
-      if (!getHost()
-          .equals(other.getHost())) return false;
-      if (getPort()
-          != other.getPort()) return false;
+      if (getTerm()
+          != other.getTerm()) return false;
+      if (hasLeaderAddress() != other.hasLeaderAddress()) return false;
+      if (hasLeaderAddress()) {
+        if (!getLeaderAddress()
+            .equals(other.getLeaderAddress())) return false;
+      }
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -2254,10 +3444,13 @@ public final class RemoteCalls {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + HOST_FIELD_NUMBER;
-      hash = (53 * hash) + getHost().hashCode();
-      hash = (37 * hash) + PORT_FIELD_NUMBER;
-      hash = (53 * hash) + getPort();
+      hash = (37 * hash) + TERM_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTerm());
+      if (hasLeaderAddress()) {
+        hash = (37 * hash) + LEADERADDRESS_FIELD_NUMBER;
+        hash = (53 * hash) + getLeaderAddress().hashCode();
+      }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2391,10 +3584,14 @@ public final class RemoteCalls {
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        host_ = "";
+        term_ = 0L;
 
-        port_ = 0;
-
+        if (leaderAddressBuilder_ == null) {
+          leaderAddress_ = null;
+        } else {
+          leaderAddress_ = null;
+          leaderAddressBuilder_ = null;
+        }
         return this;
       }
 
@@ -2421,8 +3618,12 @@ public final class RemoteCalls {
       @java.lang.Override
       public io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp buildPartial() {
         io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp result = new io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp(this);
-        result.host_ = host_;
-        result.port_ = port_;
+        result.term_ = term_;
+        if (leaderAddressBuilder_ == null) {
+          result.leaderAddress_ = leaderAddress_;
+        } else {
+          result.leaderAddress_ = leaderAddressBuilder_.build();
+        }
         onBuilt();
         return result;
       }
@@ -2471,12 +3672,11 @@ public final class RemoteCalls {
 
       public Builder mergeFrom(io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp other) {
         if (other == io.zealab.kvaft.rpc.protoc.RemoteCalls.AcquireLeaderResp.getDefaultInstance()) return this;
-        if (!other.getHost().isEmpty()) {
-          host_ = other.host_;
-          onChanged();
+        if (other.getTerm() != 0L) {
+          setTerm(other.getTerm());
         }
-        if (other.getPort() != 0) {
-          setPort(other.getPort());
+        if (other.hasLeaderAddress()) {
+          mergeLeaderAddress(other.getLeaderAddress());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -2507,110 +3707,153 @@ public final class RemoteCalls {
         return this;
       }
 
-      private java.lang.Object host_ = "";
+      private long term_ ;
       /**
-       * <code>string host = 1;</code>
-       * @return The host.
+       * <code>int64 term = 1;</code>
+       * @return The term.
        */
-      public java.lang.String getHost() {
-        java.lang.Object ref = host_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          host_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+      public long getTerm() {
+        return term_;
       }
       /**
-       * <code>string host = 1;</code>
-       * @return The bytes for host.
-       */
-      public com.google.protobuf.ByteString
-          getHostBytes() {
-        java.lang.Object ref = host_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          host_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>string host = 1;</code>
-       * @param value The host to set.
+       * <code>int64 term = 1;</code>
+       * @param value The term to set.
        * @return This builder for chaining.
        */
-      public Builder setHost(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  
-        host_ = value;
+      public Builder setTerm(long value) {
+        
+        term_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>string host = 1;</code>
+       * <code>int64 term = 1;</code>
        * @return This builder for chaining.
        */
-      public Builder clearHost() {
+      public Builder clearTerm() {
         
-        host_ = getDefaultInstance().getHost();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>string host = 1;</code>
-       * @param value The bytes for host to set.
-       * @return This builder for chaining.
-       */
-      public Builder setHostBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        
-        host_ = value;
+        term_ = 0L;
         onChanged();
         return this;
       }
 
-      private int port_ ;
+      private io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress leaderAddress_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder> leaderAddressBuilder_;
       /**
-       * <code>int32 port = 2;</code>
-       * @return The port.
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       * @return Whether the leaderAddress field is set.
        */
-      public int getPort() {
-        return port_;
+      public boolean hasLeaderAddress() {
+        return leaderAddressBuilder_ != null || leaderAddress_ != null;
       }
       /**
-       * <code>int32 port = 2;</code>
-       * @param value The port to set.
-       * @return This builder for chaining.
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       * @return The leaderAddress.
        */
-      public Builder setPort(int value) {
-        
-        port_ = value;
-        onChanged();
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getLeaderAddress() {
+        if (leaderAddressBuilder_ == null) {
+          return leaderAddress_ == null ? io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance() : leaderAddress_;
+        } else {
+          return leaderAddressBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       */
+      public Builder setLeaderAddress(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress value) {
+        if (leaderAddressBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          leaderAddress_ = value;
+          onChanged();
+        } else {
+          leaderAddressBuilder_.setMessage(value);
+        }
+
         return this;
       }
       /**
-       * <code>int32 port = 2;</code>
-       * @return This builder for chaining.
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
        */
-      public Builder clearPort() {
-        
-        port_ = 0;
-        onChanged();
+      public Builder setLeaderAddress(
+          io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder builderForValue) {
+        if (leaderAddressBuilder_ == null) {
+          leaderAddress_ = builderForValue.build();
+          onChanged();
+        } else {
+          leaderAddressBuilder_.setMessage(builderForValue.build());
+        }
+
         return this;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       */
+      public Builder mergeLeaderAddress(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress value) {
+        if (leaderAddressBuilder_ == null) {
+          if (leaderAddress_ != null) {
+            leaderAddress_ =
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.newBuilder(leaderAddress_).mergeFrom(value).buildPartial();
+          } else {
+            leaderAddress_ = value;
+          }
+          onChanged();
+        } else {
+          leaderAddressBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       */
+      public Builder clearLeaderAddress() {
+        if (leaderAddressBuilder_ == null) {
+          leaderAddress_ = null;
+          onChanged();
+        } else {
+          leaderAddress_ = null;
+          leaderAddressBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       */
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder getLeaderAddressBuilder() {
+        
+        onChanged();
+        return getLeaderAddressFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       */
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder getLeaderAddressOrBuilder() {
+        if (leaderAddressBuilder_ != null) {
+          return leaderAddressBuilder_.getMessageOrBuilder();
+        } else {
+          return leaderAddress_ == null ?
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance() : leaderAddress_;
+        }
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder> 
+          getLeaderAddressFieldBuilder() {
+        if (leaderAddressBuilder_ == null) {
+          leaderAddressBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder>(
+                  getLeaderAddress(),
+                  getParentForChildren(),
+                  isClean());
+          leaderAddress_ = null;
+        }
+        return leaderAddressBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -2665,11 +3908,1264 @@ public final class RemoteCalls {
 
   }
 
+  public interface ElectReqOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:io.zealab.kvaft.rpc.protoc.ElectReq)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>uint64 term = 1;</code>
+     * @return The term.
+     */
+    long getTerm();
+
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+     * @return Whether the address field is set.
+     */
+    boolean hasAddress();
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+     * @return The address.
+     */
+    io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getAddress();
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+     */
+    io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder getAddressOrBuilder();
+  }
+  /**
+   * Protobuf type {@code io.zealab.kvaft.rpc.protoc.ElectReq}
+   */
+  public  static final class ElectReq extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:io.zealab.kvaft.rpc.protoc.ElectReq)
+      ElectReqOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ElectReq.newBuilder() to construct.
+    private ElectReq(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ElectReq() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ElectReq();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ElectReq(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              term_ = input.readUInt64();
+              break;
+            }
+            case 18: {
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder subBuilder = null;
+              if (address_ != null) {
+                subBuilder = address_.toBuilder();
+              }
+              address_ = input.readMessage(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(address_);
+                address_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq.Builder.class);
+    }
+
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
+    /**
+     * <code>uint64 term = 1;</code>
+     * @return The term.
+     */
+    public long getTerm() {
+      return term_;
+    }
+
+    public static final int ADDRESS_FIELD_NUMBER = 2;
+    private io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress address_;
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+     * @return Whether the address field is set.
+     */
+    public boolean hasAddress() {
+      return address_ != null;
+    }
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+     * @return The address.
+     */
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getAddress() {
+      return address_ == null ? io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance() : address_;
+    }
+    /**
+     * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+     */
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder getAddressOrBuilder() {
+      return getAddress();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (term_ != 0L) {
+        output.writeUInt64(1, term_);
+      }
+      if (address_ != null) {
+        output.writeMessage(2, getAddress());
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (term_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(1, term_);
+      }
+      if (address_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getAddress());
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq)) {
+        return super.equals(obj);
+      }
+      io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq other = (io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq) obj;
+
+      if (getTerm()
+          != other.getTerm()) return false;
+      if (hasAddress() != other.hasAddress()) return false;
+      if (hasAddress()) {
+        if (!getAddress()
+            .equals(other.getAddress())) return false;
+      }
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TERM_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTerm());
+      if (hasAddress()) {
+        hash = (37 * hash) + ADDRESS_FIELD_NUMBER;
+        hash = (53 * hash) + getAddress().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code io.zealab.kvaft.rpc.protoc.ElectReq}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:io.zealab.kvaft.rpc.protoc.ElectReq)
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReqOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq.Builder.class);
+      }
+
+      // Construct using io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        term_ = 0L;
+
+        if (addressBuilder_ == null) {
+          address_ = null;
+        } else {
+          address_ = null;
+          addressBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_descriptor;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq getDefaultInstanceForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq build() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq buildPartial() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq result = new io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq(this);
+        result.term_ = term_;
+        if (addressBuilder_ == null) {
+          result.address_ = address_;
+        } else {
+          result.address_ = addressBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq) {
+          return mergeFrom((io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq other) {
+        if (other == io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq.getDefaultInstance()) return this;
+        if (other.getTerm() != 0L) {
+          setTerm(other.getTerm());
+        }
+        if (other.hasAddress()) {
+          mergeAddress(other.getAddress());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long term_ ;
+      /**
+       * <code>uint64 term = 1;</code>
+       * @return The term.
+       */
+      public long getTerm() {
+        return term_;
+      }
+      /**
+       * <code>uint64 term = 1;</code>
+       * @param value The term to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTerm(long value) {
+        
+        term_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 term = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTerm() {
+        
+        term_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress address_;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder> addressBuilder_;
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       * @return Whether the address field is set.
+       */
+      public boolean hasAddress() {
+        return addressBuilder_ != null || address_ != null;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       * @return The address.
+       */
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress getAddress() {
+        if (addressBuilder_ == null) {
+          return address_ == null ? io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance() : address_;
+        } else {
+          return addressBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       */
+      public Builder setAddress(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress value) {
+        if (addressBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          address_ = value;
+          onChanged();
+        } else {
+          addressBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       */
+      public Builder setAddress(
+          io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder builderForValue) {
+        if (addressBuilder_ == null) {
+          address_ = builderForValue.build();
+          onChanged();
+        } else {
+          addressBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       */
+      public Builder mergeAddress(io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress value) {
+        if (addressBuilder_ == null) {
+          if (address_ != null) {
+            address_ =
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.newBuilder(address_).mergeFrom(value).buildPartial();
+          } else {
+            address_ = value;
+          }
+          onChanged();
+        } else {
+          addressBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       */
+      public Builder clearAddress() {
+        if (addressBuilder_ == null) {
+          address_ = null;
+          onChanged();
+        } else {
+          address_ = null;
+          addressBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       */
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder getAddressBuilder() {
+        
+        onChanged();
+        return getAddressFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       */
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder getAddressOrBuilder() {
+        if (addressBuilder_ != null) {
+          return addressBuilder_.getMessageOrBuilder();
+        } else {
+          return address_ == null ?
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.getDefaultInstance() : address_;
+        }
+      }
+      /**
+       * <code>.io.zealab.kvaft.rpc.protoc.BindAddress address = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder> 
+          getAddressFieldBuilder() {
+        if (addressBuilder_ == null) {
+          addressBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddress.Builder, io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder>(
+                  getAddress(),
+                  getParentForChildren(),
+                  isClean());
+          address_ = null;
+        }
+        return addressBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:io.zealab.kvaft.rpc.protoc.ElectReq)
+    }
+
+    // @@protoc_insertion_point(class_scope:io.zealab.kvaft.rpc.protoc.ElectReq)
+    private static final io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq();
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ElectReq>
+        PARSER = new com.google.protobuf.AbstractParser<ElectReq>() {
+      @java.lang.Override
+      public ElectReq parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ElectReq(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ElectReq> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ElectReq> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectReq getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ElectRespOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:io.zealab.kvaft.rpc.protoc.ElectResp)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>uint64 term = 1;</code>
+     * @return The term.
+     */
+    long getTerm();
+
+    /**
+     * <code>bool authorized = 2;</code>
+     * @return The authorized.
+     */
+    boolean getAuthorized();
+  }
+  /**
+   * Protobuf type {@code io.zealab.kvaft.rpc.protoc.ElectResp}
+   */
+  public  static final class ElectResp extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:io.zealab.kvaft.rpc.protoc.ElectResp)
+      ElectRespOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use ElectResp.newBuilder() to construct.
+    private ElectResp(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private ElectResp() {
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new ElectResp();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ElectResp(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+
+              term_ = input.readUInt64();
+              break;
+            }
+            case 16: {
+
+              authorized_ = input.readBool();
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp.Builder.class);
+    }
+
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
+    /**
+     * <code>uint64 term = 1;</code>
+     * @return The term.
+     */
+    public long getTerm() {
+      return term_;
+    }
+
+    public static final int AUTHORIZED_FIELD_NUMBER = 2;
+    private boolean authorized_;
+    /**
+     * <code>bool authorized = 2;</code>
+     * @return The authorized.
+     */
+    public boolean getAuthorized() {
+      return authorized_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (term_ != 0L) {
+        output.writeUInt64(1, term_);
+      }
+      if (authorized_ != false) {
+        output.writeBool(2, authorized_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (term_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(1, term_);
+      }
+      if (authorized_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, authorized_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp)) {
+        return super.equals(obj);
+      }
+      io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp other = (io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp) obj;
+
+      if (getTerm()
+          != other.getTerm()) return false;
+      if (getAuthorized()
+          != other.getAuthorized()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TERM_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTerm());
+      hash = (37 * hash) + AUTHORIZED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getAuthorized());
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code io.zealab.kvaft.rpc.protoc.ElectResp}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:io.zealab.kvaft.rpc.protoc.ElectResp)
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectRespOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp.class, io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp.Builder.class);
+      }
+
+      // Construct using io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        term_ = 0L;
+
+        authorized_ = false;
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_descriptor;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp getDefaultInstanceForType() {
+        return io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp build() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp buildPartial() {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp result = new io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp(this);
+        result.term_ = term_;
+        result.authorized_ = authorized_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp) {
+          return mergeFrom((io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp other) {
+        if (other == io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp.getDefaultInstance()) return this;
+        if (other.getTerm() != 0L) {
+          setTerm(other.getTerm());
+        }
+        if (other.getAuthorized() != false) {
+          setAuthorized(other.getAuthorized());
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private long term_ ;
+      /**
+       * <code>uint64 term = 1;</code>
+       * @return The term.
+       */
+      public long getTerm() {
+        return term_;
+      }
+      /**
+       * <code>uint64 term = 1;</code>
+       * @param value The term to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTerm(long value) {
+        
+        term_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>uint64 term = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTerm() {
+        
+        term_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private boolean authorized_ ;
+      /**
+       * <code>bool authorized = 2;</code>
+       * @return The authorized.
+       */
+      public boolean getAuthorized() {
+        return authorized_;
+      }
+      /**
+       * <code>bool authorized = 2;</code>
+       * @param value The authorized to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAuthorized(boolean value) {
+        
+        authorized_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool authorized = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAuthorized() {
+        
+        authorized_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:io.zealab.kvaft.rpc.protoc.ElectResp)
+    }
+
+    // @@protoc_insertion_point(class_scope:io.zealab.kvaft.rpc.protoc.ElectResp)
+    private static final io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp();
+    }
+
+    public static io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ElectResp>
+        PARSER = new com.google.protobuf.AbstractParser<ElectResp>() {
+      @java.lang.Override
+      public ElectResp parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ElectResp(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<ElectResp> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ElectResp> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.zealab.kvaft.rpc.protoc.RemoteCalls.ElectResp getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_io_zealab_kvaft_rpc_protoc_Heartbeat_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_io_zealab_kvaft_rpc_protoc_Heartbeat_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_io_zealab_kvaft_rpc_protoc_PreVoteReq_descriptor;
   private static final 
@@ -2690,6 +5186,16 @@ public final class RemoteCalls {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderResp_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -2700,48 +5206,79 @@ public final class RemoteCalls {
   static {
     java.lang.String[] descriptorData = {
       "\n\017kvaft-rpc.proto\022\032io.zealab.kvaft.rpc.p" +
-      "rotoc\"\036\n\tHeartbeat\022\021\n\ttimestamp\030\001 \001(\003\"\032\n" +
-      "\nPreVoteReq\022\014\n\004term\030\003 \001(\004\".\n\nPreVoteAck\022" +
-      "\014\n\004term\030\001 \001(\004\022\022\n\nauthorized\030\002 \001(\010\"%\n\020Acq" +
-      "uireLeaderReq\022\021\n\ttimestamp\030\001 \001(\003\"/\n\021Acqu" +
-      "ireLeaderResp\022\014\n\004host\030\001 \001(\t\022\014\n\004port\030\002 \001(" +
-      "\005B)\n\032io.zealab.kvaft.rpc.protocB\013RemoteC" +
-      "allsb\006proto3"
+      "rotoc\")\n\013BindAddress\022\014\n\004host\030\001 \001(\t\022\014\n\004po" +
+      "rt\030\002 \001(\005\",\n\tHeartbeat\022\014\n\004term\030\001 \001(\003\022\021\n\tt" +
+      "imestamp\030\002 \001(\003\"!\n\014HeartbeatAck\022\021\n\ttimest" +
+      "amp\030\001 \001(\003\"\032\n\nPreVoteReq\022\014\n\004term\030\003 \001(\004\".\n" +
+      "\nPreVoteAck\022\014\n\004term\030\001 \001(\004\022\022\n\nauthorized\030" +
+      "\002 \001(\010\"%\n\020AcquireLeaderReq\022\021\n\ttimestamp\030\001" +
+      " \001(\003\"a\n\021AcquireLeaderResp\022\014\n\004term\030\001 \001(\003\022" +
+      ">\n\rleaderAddress\030\002 \001(\0132\'.io.zealab.kvaft" +
+      ".rpc.protoc.BindAddress\"R\n\010ElectReq\022\014\n\004t" +
+      "erm\030\001 \001(\004\0228\n\007address\030\002 \001(\0132\'.io.zealab.k" +
+      "vaft.rpc.protoc.BindAddress\"-\n\tElectResp" +
+      "\022\014\n\004term\030\001 \001(\004\022\022\n\nauthorized\030\002 \001(\010B)\n\032io" +
+      ".zealab.kvaft.rpc.protocB\013RemoteCallsb\006p" +
+      "roto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         });
-    internal_static_io_zealab_kvaft_rpc_protoc_Heartbeat_descriptor =
+    internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_descriptor =
       getDescriptor().getMessageTypes().get(0);
+    internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_io_zealab_kvaft_rpc_protoc_BindAddress_descriptor,
+        new java.lang.String[] { "Host", "Port", });
+    internal_static_io_zealab_kvaft_rpc_protoc_Heartbeat_descriptor =
+      getDescriptor().getMessageTypes().get(1);
     internal_static_io_zealab_kvaft_rpc_protoc_Heartbeat_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_io_zealab_kvaft_rpc_protoc_Heartbeat_descriptor,
+        new java.lang.String[] { "Term", "Timestamp", });
+    internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_io_zealab_kvaft_rpc_protoc_HeartbeatAck_descriptor,
         new java.lang.String[] { "Timestamp", });
     internal_static_io_zealab_kvaft_rpc_protoc_PreVoteReq_descriptor =
-      getDescriptor().getMessageTypes().get(1);
+      getDescriptor().getMessageTypes().get(3);
     internal_static_io_zealab_kvaft_rpc_protoc_PreVoteReq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_io_zealab_kvaft_rpc_protoc_PreVoteReq_descriptor,
         new java.lang.String[] { "Term", });
     internal_static_io_zealab_kvaft_rpc_protoc_PreVoteAck_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_io_zealab_kvaft_rpc_protoc_PreVoteAck_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_io_zealab_kvaft_rpc_protoc_PreVoteAck_descriptor,
         new java.lang.String[] { "Term", "Authorized", });
     internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderReq_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderReq_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderReq_descriptor,
         new java.lang.String[] { "Timestamp", });
     internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderResp_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderResp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderResp_descriptor,
-        new java.lang.String[] { "Host", "Port", });
+        new java.lang.String[] { "Term", "LeaderAddress", });
+    internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_descriptor,
+        new java.lang.String[] { "Term", "Address", });
+    internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_io_zealab_kvaft_rpc_protoc_ElectResp_descriptor,
+        new java.lang.String[] { "Term", "Authorized", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

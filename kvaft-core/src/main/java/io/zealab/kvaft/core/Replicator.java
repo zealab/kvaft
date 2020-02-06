@@ -24,10 +24,6 @@ public class Replicator {
 
     private volatile ReplicatorState state;
 
-    private volatile ScheduledFuture<?> heartbeatTimer;
-
-    private StubImpl stub = new StubImpl();
-
     public String nodeId() {
         return endpoint.toString();
     }
@@ -41,32 +37,11 @@ public class Replicator {
     public synchronized void close() {
         if (this.state == ReplicatorState.CONNECTED) {
             this.state = ReplicatorState.DISCONNECTED;
-            this.heartbeatTimer.cancel(true);
-            this.heartbeatTimer = null;
             client.close();
         }
     }
 
     public Client getClient() {
         return client;
-    }
-
-    /**
-     * starting a heartbeat task
-     */
-    public void startHeartbeatTimer() {
-        this.heartbeatTimer = TimerManager.scheduleWithFixRate(new HeartbeatTask(), 10, 10, TimeUnit.SECONDS);
-    }
-
-    /**
-     * heartbeat timer task
-     */
-    public class HeartbeatTask implements Runnable {
-
-        @Override
-        public void run() {
-            log.info("HeartbeatTask running...");
-            stub.heartbeat(endpoint);
-        }
     }
 }

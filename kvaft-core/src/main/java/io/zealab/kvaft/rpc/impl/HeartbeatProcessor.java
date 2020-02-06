@@ -14,7 +14,8 @@ public class HeartbeatProcessor extends RequestProcessor<RemoteCalls.Heartbeat> 
 
     @Override
     protected void doProcess0(Peer peer, long requestId, RemoteCalls.Heartbeat payload) {
-        long timestamp = System.currentTimeMillis();
-        peer.setLastHbTime(timestamp);
+        cpm.getNode().ifPresent(
+                node -> node.handleHeartbeat(peer, requestId, payload.getTerm())
+        );
     }
 }

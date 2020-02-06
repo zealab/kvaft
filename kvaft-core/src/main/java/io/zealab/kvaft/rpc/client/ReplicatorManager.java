@@ -1,5 +1,6 @@
 package io.zealab.kvaft.rpc.client;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
@@ -34,15 +35,24 @@ public class ReplicatorManager {
     public void registerReplicator(Endpoint endpoint, Client client) {
         // expose client instance for another thread (maybe)
         Replicator replicator = new Replicator(endpoint, client, ReplicatorState.CONNECTED);
-        replicator.startHeartbeatTimer();
         registerReplicator(replicator);
     }
 
     public void registerReplicator(Replicator replicator) {
         final Lock wl = replicatorLock.writeLock();
-        wl.lock();
         try {
+            wl.lock();
             activeReplicators.putIfAbsent(replicator.nodeId(), replicator);
+        } finally {
+            wl.unlock();
+        }
+    }
+
+    public void removeReplicator(Endpoint endpoint) {
+        final Lock wl = replicatorLock.writeLock();
+        try {
+            wl.lock();
+            activeReplicators.remove(endpoint.toString());
         } finally {
             wl.unlock();
         }
@@ -50,8 +60,8 @@ public class ReplicatorManager {
 
     public Replicator getReplicator(String nodeId) {
         final Lock rl = replicatorLock.readLock();
-        rl.lock();
         try {
+            rl.lock();
             return activeReplicators.get(nodeId);
         } finally {
             rl.unlock();

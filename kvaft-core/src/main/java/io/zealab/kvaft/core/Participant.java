@@ -1,6 +1,7 @@
 package io.zealab.kvaft.core;
 
 import com.google.common.base.Objects;
+import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 import io.zealab.kvaft.util.Assert;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +39,12 @@ public class Participant {
         return Participant.builder().endpoint(endpoint).ontology(itself).build();
     }
 
+    public static Participant from(RemoteCalls.BindAddress address, boolean itself) {
+        return from(String.format("%s:%d", address.getHost(), address.getPort()), itself);
+    }
+
     public static Participant from(Endpoint e, boolean itself) {
-        return Participant.builder().endpoint(e).ontology(itself).build();
+        return from(String.format("%s:%d", e.getIp(), e.getPort()), itself);
     }
 
     @Override
