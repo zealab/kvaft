@@ -15,18 +15,18 @@ import java.util.concurrent.Future;
 public class StubImpl implements Stub {
 
     @Override
-    public Future<RemoteCalls.HeartbeatAck> heartbeat(Endpoint endpoint) {
+    public Future<RemoteCalls.HeartbeatAck> heartbeat(Endpoint endpoint, long term) {
         Client client = ClientFactory.getOrCreate(endpoint);
         RequestId requestId = RequestId.create();
         Assert.notNull(client, String.format("could not establish a connection with endpoint=%s", endpoint.toString()));
-        RemoteCalls.Heartbeat heartbeat = RemoteCalls.Heartbeat.newBuilder().setTimestamp(requestId.getCreateTime()).build();
+        RemoteCalls.Heartbeat heartbeat = RemoteCalls.Heartbeat.newBuilder().setTerm(term).setTimestamp(requestId.getCreateTime()).build();
         KvaftMessage<RemoteCalls.Heartbeat> req = KvaftMessage.<RemoteCalls.Heartbeat>builder()
                 .requestId(requestId.getValue())
                 .payload(heartbeat)
                 .build();
         SettableFuture<RemoteCalls.HeartbeatAck> result = SettableFuture.create();
-        client.invokeWithCallback(req, 1000, 1000, payload -> {
-            log.info("preVote response={}", payload.toString());
+        client.invokeWithCallback(req, 5000, 5000, payload -> {
+            log.info("heartbeat response={}", payload.toString());
             RemoteCalls.HeartbeatAck ack = (RemoteCalls.HeartbeatAck) payload;
             result.set(ack);
         });

@@ -10,21 +10,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>kvaft-example</artifactId>
+    <packaging>pom</packaging>
 
-    <dependencies>
-        <dependency>
-            <groupId>io.zealab</groupId>
-            <artifactId>kvaft-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>server-node-1</module>
+        <module>server-node-2</module>
+        <module>server-node-3</module>
+    </modules>
 
 </project>

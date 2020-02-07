@@ -115,7 +115,7 @@ public class NodeEngine implements Node {
                 authorized = true;
             }
         }
-        RemoteCalls.PreVoteAck preVoteAck = RemoteCalls.PreVoteAck.newBuilder().setAuthorized(authorized).build();
+        RemoteCalls.PreVoteAck preVoteAck = RemoteCalls.PreVoteAck.newBuilder().setTerm(offerTerm).setAuthorized(authorized).build();
         KvaftMessage<RemoteCalls.PreVoteAck> kvaftMessage = KvaftMessage.<RemoteCalls.PreVoteAck>builder().payload(preVoteAck).requestId(requestId).build();
         channel.writeAndFlush(kvaftMessage);
     }
@@ -205,7 +205,9 @@ public class NodeEngine implements Node {
      * starting a sleep timeout task
      */
     public void startSleepTimeoutTask() {
-        asyncExecutor.execute(new SleepTimeoutTask());
+        if (state.compareTo(NodeState.ELECTING) < 0) {
+            asyncExecutor.execute(new SleepTimeoutTask());
+        }
     }
 
     /**
@@ -455,17 +457,21 @@ public class NodeEngine implements Node {
         }
     }
 
+    /**
+     * Heartbeat from leader to follower
+     */
     public class HeartbeatTask implements Runnable {
 
         private final int timeout = 5000;
 
         @Override
         public void run() {
-            while (context.isHeartbeatOn()) {
+            while (context.isHeartbeatOn() && state.equals(NodeState.ELECTED)) {
                 long begin = System.currentTimeMillis();
+                long currTerm = currTerm();
                 commonConfig.getParticipants().parallelStream().filter(e -> !e.isOntology()).forEach(
                         p -> {
-                            Future<RemoteCalls.HeartbeatAck> ackFuture = stub.heartbeat(p.getEndpoint());
+                            Future<RemoteCalls.HeartbeatAck> ackFuture = stub.heartbeat(p.getEndpoint(), currTerm);
                             while (!ackFuture.isDone() && System.currentTimeMillis() - begin < timeout) {
                                 // spin
                             }

@@ -58,7 +58,7 @@ public interface Node extends Initializer {
     void handleElectRequest(Peer peer, long requestId, long offerTerm);
 
     /**
-     * This method handles heartbeat from leader which uses it for maintaining replicators relationships
+     * This method handles the heartbeat from leader which uses it for maintaining replicators relationships
      *
      * @param peer       client
      * @param requestId  requestId

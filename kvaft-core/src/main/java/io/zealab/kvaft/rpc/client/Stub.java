@@ -11,8 +11,9 @@ public interface Stub {
      * Heartbeat call
      *
      * @param endpoint toWhere
+     * @param term     currTerm
      */
-    Future<RemoteCalls.HeartbeatAck> heartbeat(Endpoint endpoint);
+    Future<RemoteCalls.HeartbeatAck> heartbeat(Endpoint endpoint, long term);
 
     /**
      * pre vote req

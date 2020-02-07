@@ -51,7 +51,7 @@ public class KvaftProtocolCodec implements Decoder, Encoder {
             byte[] clazzMeta = getBytes(data, clazzLength);
 
             int payloadSize = dataSize - clazzLength - getFixHeaderLength();
-            Assert.state(payloadSize > 0, "invalid message , cause payload size is illegal");
+            Assert.state(payloadSize >= 0, "invalid message , cause payload size is illegal");
             byte[] payload = getBytes(data, payloadSize);
 
             // crc32 validation
