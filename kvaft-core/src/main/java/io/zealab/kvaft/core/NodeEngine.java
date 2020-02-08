@@ -171,7 +171,7 @@ public class NodeEngine implements Node {
         log.info("Leader election starting...");
         state = NodeState.ELECTING;
         startElectionConfirmingTask();
-        context.getElectionConfirmQueue().updateTerm(term);
+        context.resetElectionConfirmQueue(term);
         commonConfig.getParticipants()
                 .parallelStream()
                 .filter(e -> !e.isOntology())
@@ -188,7 +188,7 @@ public class NodeEngine implements Node {
                                         RemoteCalls.ElectResp resp = respFuture.get();
                                         if (resp.getAuthorized()
                                                 && term == resp.getTerm()) {
-                                            context.getElectionConfirmQueue().addSignalIfNx(participant.getEndpoint(), term);
+                                            context.addElectionConfirmNx(participant.getEndpoint(), term);
                                         }
                                     } catch (InterruptedException | ExecutionException e) {
                                         log.error("electing itself response failed");
@@ -349,7 +349,7 @@ public class NodeEngine implements Node {
                 }
                 log.info("start to broadcast pre voting msg to the other participants");
                 // not decide which node is leader
-                context.getPreVoteConfirmQueue().updateTerm(termVal);
+                context.resetPreVoteConfirmQueue(termVal);
                 List<Participant> participants = commonConfig.getParticipants();
                 // starting to check pre vote acknowledges
                 startPreVoteSpinTask(termVal);
@@ -358,7 +358,7 @@ public class NodeEngine implements Node {
                             Endpoint endpoint = p.getEndpoint();
                             try {
                                 // vote for itself
-                                context.getPreVoteConfirmQueue().addSignalIfNx(commonConfig.getBindEndpoint(), termVal);
+                                context.addPreVoteConfirmNx(commonConfig.getBindEndpoint(), termVal);
                                 Future<RemoteCalls.PreVoteAck> future = stub.preVote(endpoint, termVal);
                                 // Waiting for pre vote acknowledges from other participants
                                 for (int i = 0; i < commonConfig.getPreVoteAckRetry(); i++) {
@@ -376,7 +376,7 @@ public class NodeEngine implements Node {
                                     RemoteCalls.PreVoteAck ack = future.get();
                                     log.info("PreVote acknowledge endpoint={},content={}", endpoint.toString(), ack.toString());
                                     if (ack.getAuthorized()) {
-                                        context.getPreVoteConfirmQueue().addSignalIfNx(endpoint, termVal);
+                                        context.addPreVoteConfirmNx(endpoint, termVal);
                                     }
                                 } else {
                                     log.info("it's timeout for waiting response");
@@ -408,7 +408,7 @@ public class NodeEngine implements Node {
             long currTerm = currTerm();
             int quorum = context.getQuorum(commonConfig.getParticipants().size());
             while (System.currentTimeMillis() - begin < commonConfig.getPreVoteConfirmTimeout()) {
-                int size = context.getPreVoteConfirmQueue().size();
+                int size = context.preVoteConfirmQueueSize();
                 if (currTerm == term && size >= quorum) {
                     log.info("current term={}, confirm queue size={}", currTerm, size);
                     electItselfNode(currTerm);
@@ -436,9 +436,9 @@ public class NodeEngine implements Node {
             long begin = System.currentTimeMillis();
             int quorum = context.getQuorum(commonConfig.getParticipants().size());
             while (System.currentTimeMillis() - begin < commonConfig.getElectConfirmTimeout()) {
-                int size = context.getElectionConfirmQueue().size();
+                int size = context.electionConfirmQueueSize();
                 if (size >= quorum) {
-                    log.info("election confirm queue size={}", size);
+                    log.info("The election is complete in term={}, election confirmed size={}", currTerm(), size);
                     state = NodeState.ELECTED;
                     leader = Participant.from(commonConfig.getBindEndpoint(), true);
                     // starting heartbeat task
