@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -52,13 +53,13 @@ public class NodeEngine implements Node {
 
     private volatile NodeState state = NodeState.FOLLOWING;
 
-    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final NodeContext context = new NodeContext();
 
-    private final static ChannelProcessorManager processManager = ChannelProcessorManager.getInstance();
+    private final static ChannelProcessorManager cpm = ChannelProcessorManager.getInstance();
 
-    private final static ReplicatorManager replicatorManager = ReplicatorManager.getInstance();
+    private final static ReplicatorManager rm = ReplicatorManager.getInstance();
 
     private final static ExecutorService asyncExecutor = new ThreadPoolExecutor(
             Runtime.getRuntime().availableProcessors() * 2,
@@ -86,6 +87,8 @@ public class NodeEngine implements Node {
         Participant leader = acquireLeader();
         if (leader == null) {
             startSleepTimeoutTask();
+        } else {
+            assignLeader(leader);
         }
     }
 
@@ -96,24 +99,45 @@ public class NodeEngine implements Node {
 
     @Override
     public Participant leader() {
-        return leader;
+        Lock rLock = lock.readLock();
+        try {
+            rLock.lock();
+            return leader;
+        } finally {
+            rLock.unlock();
+        }
+    }
+
+    @Override
+    public void assignLeader(Participant candidate) {
+        Lock wLock = lock.writeLock();
+        try {
+            wLock.lock();
+            this.state = NodeState.ELECTED;
+            this.leader = candidate;
+        } finally {
+            wLock.unlock();
+        }
     }
 
     @Override
     public void handlePreVoteRequest(Peer peer, long requestId, long offerTerm) {
         Channel channel = peer.getChannel();
         boolean authorized = false;
-        synchronized (term) {
+        Lock wLock = lock.writeLock();
+        try {
+            wLock.lock();
             long currTerm = currTerm();
             boolean doAuthorize = currTerm <= offerTerm
-                    && context.isAuthorizable(offerTerm)
-                    && state.compareTo(NodeState.ELECTING) < 0;
+                    && context.isAuthorizable(offerTerm);
             if (doAuthorize) {
                 term.set(offerTerm);
-                context.setTermAcked(offerTerm);
+                context.setLastTerm(offerTerm);
                 state = NodeState.ELECTING;
                 authorized = true;
             }
+        } finally {
+            wLock.unlock();
         }
         RemoteCalls.PreVoteAck preVoteAck = RemoteCalls.PreVoteAck.newBuilder().setTerm(offerTerm).setAuthorized(authorized).build();
         KvaftMessage<RemoteCalls.PreVoteAck> kvaftMessage = KvaftMessage.<RemoteCalls.PreVoteAck>builder().payload(preVoteAck).requestId(requestId).build();
@@ -124,15 +148,22 @@ public class NodeEngine implements Node {
     public void handleElectRequest(Peer peer, long requestId, long offerTerm) {
         Channel channel = peer.getChannel();
         boolean authorized = false;
-        synchronized (term) {
+        Lock wLock = lock.writeLock();
+        try {
+            wLock.lock();
             long currTerm = currTerm();
             boolean doAuthorize = currTerm <= offerTerm
-                    && state.compareTo(NodeState.ELECTING) == 0;
+                    && ensureState(NodeState.ELECTING);
             if (doAuthorize) {
                 term.set(offerTerm);
-                state = NodeState.ELECTED;
-                authorized = true;
+                Participant p = Participant.from(peer.getEndpoint(), false);
+                if (this.commonConfig.isValidParticipant(p)) {
+                    assignLeader(p);
+                    authorized = true;
+                }
             }
+        } finally {
+            wLock.unlock();
         }
         RemoteCalls.ElectResp electResp = RemoteCalls.ElectResp.newBuilder().setTerm(offerTerm).setAuthorized(authorized).build();
         KvaftMessage<RemoteCalls.ElectResp> kvaftMessage = KvaftMessage.<RemoteCalls.ElectResp>builder().payload(electResp).requestId(requestId).build();
@@ -142,10 +173,29 @@ public class NodeEngine implements Node {
     @Override
     public void handleHeartbeat(Peer peer, long requestId, long offerTerm) {
         Channel channel = peer.getChannel();
-        if (offerTerm == term.get() && state == NodeState.ELECTED) {
+        if (offerTerm == term.get() && ensureState(NodeState.ELECTED)) {
             RemoteCalls.HeartbeatAck heartbeatAck = RemoteCalls.HeartbeatAck.newBuilder().setTimestamp(System.currentTimeMillis()).build();
             KvaftMessage<RemoteCalls.HeartbeatAck> kvaftMessage = KvaftMessage.<RemoteCalls.HeartbeatAck>builder().payload(heartbeatAck).requestId(requestId).build();
             channel.writeAndFlush(kvaftMessage);
+        }
+    }
+
+    @Override
+    public void handleLeaderAcquire(Peer peer, long requestId) {
+        Channel channel = peer.getChannel();
+        Lock rLock = lock.readLock();
+        try {
+            rLock.lock();
+            Participant leader = leader();
+            if (ensureState(NodeState.ELECTED) && !leader.isOntology()) {
+                Long term = currTerm();
+                RemoteCalls.BindAddress address = RemoteCalls.BindAddress.newBuilder().setHost(leader.getEndpoint().getIp()).setPort(leader.getEndpoint().getPort()).build();
+                RemoteCalls.AcquireLeaderResp resp = RemoteCalls.AcquireLeaderResp.newBuilder().setLeaderAddress(address).setTerm(term).build();
+                KvaftMessage<RemoteCalls.AcquireLeaderResp> kvaftMessage = KvaftMessage.<RemoteCalls.AcquireLeaderResp>builder().payload(resp).requestId(requestId).build();
+                channel.writeAndFlush(kvaftMessage);
+            }
+        } finally {
+            rLock.unlock();
         }
     }
 
@@ -157,7 +207,7 @@ public class NodeEngine implements Node {
         GlobalScanner scanner = new GlobalScanner();
         scanner.init();
         // binding node
-        processManager.bindNode(this);
+        cpm.bindNode(this);
         // starting rpc server
         Endpoint bindAddress = commonConfig.getBindEndpoint();
         server = new NioServer(bindAddress.getIp(), bindAddress.getPort());
@@ -169,16 +219,108 @@ public class NodeEngine implements Node {
      */
     public void electItselfNode(final long term) {
         log.info("Leader election starting...");
-        state = NodeState.ELECTING;
-        startElectionConfirmingTask();
-        context.resetElectionConfirmQueue(term);
+        Lock wLock = lock.writeLock();
+        try {
+            wLock.lock();
+            if (ensureNotState(NodeState.FOLLOWING)) {
+                // interrupt electing...
+                log.info("interrupt the electing...");
+                return;
+            }
+            state = NodeState.ELECTING;
+            context.resetElectionConfirmQueue(term);
+            startElectionConfirmingTask();
+        } finally {
+            wLock.unlock();
+        }
+        // broadcast electing message
+        broadcastElectingMsg(term);
+    }
+
+    public void reRunSleepTimeoutTask() {
+        this.state = NodeState.FOLLOWING;
+        startSleepTimeoutTask();
+    }
+
+    /**
+     * starting a sleep timeout task
+     */
+    public void startSleepTimeoutTask() {
+        if (ensureState(NodeState.FOLLOWING)) {
+            asyncExecutor.execute(new SleepTimeoutTask());
+        }
+    }
+
+    /**
+     * starting a heartbeat task
+     */
+    public void startHeartbeatTask() {
+        context.turnOnHeartbeat();
+        asyncExecutor.execute(new HeartbeatTask());
+    }
+
+    /**
+     * starting a heartbeat check task
+     */
+    public void startHeartbeatCheckTask() {
+        asyncExecutor.execute(new HeartbeatCheckTask());
+    }
+
+    /**
+     * starting a election confirming task
+     */
+    public void startElectionConfirmingTask() {
+        asyncExecutor.execute(new ElectionConfirmingTask());
+    }
+
+    private void broadcastPreVoteMsg(long termVal) {
+        log.info("start to broadcast pre voting msg to the other participants");
+        // not decide which node is leader
+        context.resetPreVoteConfirmQueue(termVal);
+        List<Participant> participants = commonConfig.getParticipants();
+        participants.parallelStream().filter(e -> !e.isOntology()).forEach(
+                p -> {
+                    Endpoint endpoint = p.getEndpoint();
+                    try {
+                        // vote for itself
+                        context.addPreVoteConfirmNx(commonConfig.getBindEndpoint(), termVal);
+                        Future<RemoteCalls.PreVoteAck> future = stub.preVote(endpoint, termVal);
+                        // Waiting for pre vote acknowledges from other participants
+                        for (int i = 0; i < commonConfig.getPreVoteAckRetry(); i++) {
+                            if (future.isDone()) {
+                                break;
+                            }
+                            // sleep for a second
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                log.error("Checking future was interrupted");
+                            }
+                        }
+                        if (future.isDone()) {
+                            RemoteCalls.PreVoteAck ack = future.get();
+                            log.info("PreVote acknowledge endpoint={},content={}", endpoint.toString(), ack.toString());
+                            if (ack.getAuthorized()) {
+                                context.addPreVoteConfirmNx(endpoint, termVal);
+                            }
+                        } else {
+                            log.info("it's timeout for waiting response");
+                        }
+                    } catch (Exception e) {
+                        log.error("There're some problems when retrieving result from the preVoteAck, endpoint={}", endpoint.toString());
+                    }
+                }
+        );
+    }
+
+    private void broadcastElectingMsg(long termVal) {
         commonConfig.getParticipants()
                 .parallelStream()
                 .filter(e -> !e.isOntology())
                 .forEach(
                         participant -> {
                             try {
-                                Future<RemoteCalls.ElectResp> respFuture = stub.elect(participant.getEndpoint(), term);
+                                Future<RemoteCalls.ElectResp> respFuture = stub.elect(participant.getEndpoint(), termVal);
                                 long begin = System.currentTimeMillis();
                                 while (!respFuture.isDone() && System.currentTimeMillis() - begin < commonConfig.getElectTimeout()) {
                                     // ignore it
@@ -187,8 +329,8 @@ public class NodeEngine implements Node {
                                     try {
                                         RemoteCalls.ElectResp resp = respFuture.get();
                                         if (resp.getAuthorized()
-                                                && term == resp.getTerm()) {
-                                            context.addElectionConfirmNx(participant.getEndpoint(), term);
+                                                && termVal == resp.getTerm()) {
+                                            context.addElectionConfirmNx(participant.getEndpoint(), termVal);
                                         }
                                     } catch (InterruptedException | ExecutionException e) {
                                         log.error("electing itself response failed");
@@ -202,40 +344,9 @@ public class NodeEngine implements Node {
     }
 
     /**
-     * starting a sleep timeout task
-     */
-    public void startSleepTimeoutTask() {
-        if (state.compareTo(NodeState.ELECTING) < 0) {
-            asyncExecutor.execute(new SleepTimeoutTask());
-        }
-    }
-
-    /**
-     * starting a heartbeat task
-     */
-    public void startHeartbeatTask() {
-        context.setHeartbeatOn(true);
-        asyncExecutor.execute(new HeartbeatTask());
-    }
-
-    /**
-     * canceling heartbeat task
-     */
-    public void cancelHeartbeatTask() {
-        context.setHeartbeatOn(false);
-    }
-
-    /**
-     * starting a election confirming task
-     */
-    public void startElectionConfirmingTask() {
-        asyncExecutor.execute(new ElectionConfirmingTask());
-    }
-
-    /**
      * starting a pre vote timeout task
      */
-    public void startPreVoteSpinTask(long term) {
+    public void startPreVoteConfirmingTask(long term) {
         asyncExecutor.execute(new PreVoteConfirmingTask(term));
     }
 
@@ -247,14 +358,25 @@ public class NodeEngine implements Node {
      * reset leader when heartbeat timeout
      */
     private void resetLeader() {
-        Lock wl = rwLock.writeLock();
+        Lock wLock = lock.writeLock();
         try {
-            wl.lock();
-            this.leader = null;
-            startSleepTimeoutTask();
+            wLock.lock();
+            if (ensureState(NodeState.INVALID)) {
+                this.leader = null;
+                this.context.turnOffHeartbeat();
+                reRunSleepTimeoutTask();
+            }
         } finally {
-            wl.unlock();
+            wLock.unlock();
         }
+    }
+
+    private boolean ensureState(NodeState state) {
+        return this.state.compareTo(state) == 0;
+    }
+
+    private boolean ensureNotState(NodeState state) {
+        return this.state.compareTo(state) != 0;
     }
 
     private void parseConfigFile() {
@@ -263,7 +385,7 @@ public class NodeEngine implements Node {
         try {
             configStream = Files.newInputStream(Paths.get(configFileLocation));
         } catch (IOException e) {
-            log.warn("could not find any file from Files.newInputStream ");
+            log.warn("could not find any file from Files.newInputStream.");
             configStream = getClass().getClassLoader().getResourceAsStream(configFileLocation);
         }
         Assert.notNull(configStream, "The config file could be not existed");
@@ -296,37 +418,39 @@ public class NodeEngine implements Node {
      */
     @Nullable
     public Participant acquireLeader() {
-        Participant leader = null;
-        int quorum = context.getQuorum(commonConfig.getParticipants().size());
-        List<Participant> sub = commonConfig.getParticipants().stream().filter(e -> !e.isOntology()).collect(Collectors.toList()).subList(0, quorum);
-        for (Participant p : sub) {
-            Future<RemoteCalls.AcquireLeaderResp> respFuture = stub.acquireLeader(p.getEndpoint());
-            long start = System.currentTimeMillis();
-            while (!respFuture.isDone() && System.currentTimeMillis() - start < commonConfig.getAcquireLeaderTimeout()) {
-                // spin
-            }
-            if (!respFuture.isDone()) {
-                continue;
-            }
-            try {
-                RemoteCalls.AcquireLeaderResp resp = respFuture.get();
-                RemoteCalls.BindAddress address = resp.getLeaderAddress();
-                Participant tmp = Participant.from(address, false);
-                if (commonConfig.isValidParticipant(tmp)) {
-                    leader = tmp;
-                    state = NodeState.ELECTED;
-                    term.set(resp.getTerm());
-                }
-                break;
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("something's wrong with acquiring leader");
-            }
-        }
-        return leader;
+        Map<RemoteCalls.BindAddress, Long> counted = commonConfig.getParticipants()
+                .parallelStream()
+                .filter(e -> !e.isOntology())
+                .map(
+                        p -> {
+                            long start = System.currentTimeMillis();
+                            Future<RemoteCalls.AcquireLeaderResp> respFuture = stub.acquireLeader(p.getEndpoint());
+                            while (!respFuture.isDone() && System.currentTimeMillis() - start < commonConfig.getAcquireLeaderTimeout()) {
+                                // spin
+                            }
+                            if (!respFuture.isDone()) {
+                                return null;
+                            }
+                            try {
+                                RemoteCalls.AcquireLeaderResp resp = respFuture.get();
+                                return resp.getLeaderAddress();
+                            } catch (InterruptedException | ExecutionException e) {
+                                log.error("something's wrong with acquiring leader");
+                            }
+                            return null;
+                        }
+                ).filter(Objects::nonNull).collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        List<RemoteCalls.BindAddress> possibleLeaders = counted.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).collect(Collectors.toList());
+        return possibleLeaders.size() > 0
+                ? Participant.from(possibleLeaders.get(possibleLeaders.size() - 1), false)
+                : null;
     }
 
     /**
-     * When the sleep thread task awake, it will broadcast preVote message to every node.
+     * When the sleep thread task awakes, it will broadcast preVote message to every node.
+     *
+     * TODO everlasting
      */
     public class SleepTimeoutTask implements Runnable {
 
@@ -339,55 +463,28 @@ public class NodeEngine implements Node {
             } catch (InterruptedException e) {
                 log.error("SleepTimeoutTask was interrupted", e);
             }
-            if (leader == null) {
+            if (ensureState(NodeState.FOLLOWING)) {
                 long termVal;
-                synchronized (term) {
+                Lock wLock = lock.writeLock();
+                try {
+                    wLock.lock();
+                    if (ensureNotState(NodeState.FOLLOWING)) {
+                        // double check for thread safety
+                        log.info("Sleeping timeout task interrupted, cause state was changed in the middle of process");
+                        return;
+                    }
                     termVal = term.incrementAndGet();
                     if (context.isAuthorizable(termVal)) {
-                        context.setTermAcked(termVal);
+                        context.setLastTerm(termVal);
                     }
+                } finally {
+                    wLock.unlock();
                 }
-                log.info("start to broadcast pre voting msg to the other participants");
-                // not decide which node is leader
-                context.resetPreVoteConfirmQueue(termVal);
-                List<Participant> participants = commonConfig.getParticipants();
                 // starting to check pre vote acknowledges
-                startPreVoteSpinTask(termVal);
-                participants.parallelStream().filter(e -> !e.isOntology()).forEach(
-                        p -> {
-                            Endpoint endpoint = p.getEndpoint();
-                            try {
-                                // vote for itself
-                                context.addPreVoteConfirmNx(commonConfig.getBindEndpoint(), termVal);
-                                Future<RemoteCalls.PreVoteAck> future = stub.preVote(endpoint, termVal);
-                                // Waiting for pre vote acknowledges from other participants
-                                for (int i = 0; i < commonConfig.getPreVoteAckRetry(); i++) {
-                                    if (future.isDone()) {
-                                        break;
-                                    }
-                                    // sleep for a second
-                                    try {
-                                        Thread.sleep(1000);
-                                    } catch (InterruptedException e) {
-                                        log.error("Checking future was interrupted");
-                                    }
-                                }
-                                if (future.isDone()) {
-                                    RemoteCalls.PreVoteAck ack = future.get();
-                                    log.info("PreVote acknowledge endpoint={},content={}", endpoint.toString(), ack.toString());
-                                    if (ack.getAuthorized()) {
-                                        context.addPreVoteConfirmNx(endpoint, termVal);
-                                    }
-                                } else {
-                                    log.info("it's timeout for waiting response");
-                                }
-                            } catch (Exception e) {
-                                log.error("There're some problems when retrieving result from the preVoteAck, endpoint={}", endpoint.toString());
-                            }
-                        }
-                );
+                startPreVoteConfirmingTask(termVal);
+                // broadcasting preVote message
+                broadcastPreVoteMsg(termVal);
             }
-
         }
     }
 
@@ -406,10 +503,12 @@ public class NodeEngine implements Node {
         public void run() {
             long begin = System.currentTimeMillis();
             long currTerm = currTerm();
-            int quorum = context.getQuorum(commonConfig.getParticipants().size());
+            int quorum = commonConfig.getQuorum();
             while (System.currentTimeMillis() - begin < commonConfig.getPreVoteConfirmTimeout()) {
                 int size = context.preVoteConfirmQueueSize();
-                if (currTerm == term && size >= quorum) {
+                if (currTerm == term
+                        && size >= quorum
+                        && ensureState(NodeState.FOLLOWING)) {
                     log.info("current term={}, confirm queue size={}", currTerm, size);
                     electItselfNode(currTerm);
                     return;
@@ -422,7 +521,7 @@ public class NodeEngine implements Node {
                 }
             }
             log.warn("PreVoteConfirmingTask timeout in {} ms", commonConfig.getPreVoteConfirmTimeout());
-            startSleepTimeoutTask();
+            reRunSleepTimeoutTask();
         }
     }
 
@@ -434,15 +533,15 @@ public class NodeEngine implements Node {
         @Override
         public void run() {
             long begin = System.currentTimeMillis();
-            int quorum = context.getQuorum(commonConfig.getParticipants().size());
+            int quorum = commonConfig.getQuorum();
             while (System.currentTimeMillis() - begin < commonConfig.getElectConfirmTimeout()) {
                 int size = context.electionConfirmQueueSize();
                 if (size >= quorum) {
                     log.info("The election is complete in term={}, election confirmed size={}", currTerm(), size);
-                    state = NodeState.ELECTED;
-                    leader = Participant.from(commonConfig.getBindEndpoint(), true);
+                    assignLeader(Participant.from(commonConfig.getBindEndpoint(), true));
                     // starting heartbeat task
                     startHeartbeatTask();
+                    startHeartbeatCheckTask();
                     return;
                 }
                 // sleep for a second
@@ -453,7 +552,7 @@ public class NodeEngine implements Node {
                 }
             }
             log.warn("ElectionConfirmingTask timeout in {} ms", commonConfig.getElectConfirmTimeout());
-            startSleepTimeoutTask();
+            reRunSleepTimeoutTask();
         }
     }
 
@@ -478,11 +577,16 @@ public class NodeEngine implements Node {
                             if (ackFuture.isDone()) {
                                 try {
                                     ackFuture.get();
+                                    Optional.ofNullable(
+                                            cpm.getPeer(p.getEndpoint().toString())
+                                    ).ifPresent(
+                                            peer -> peer.setLastHbTime(System.currentTimeMillis())
+                                    );
                                 } catch (InterruptedException | ExecutionException e) {
                                     log.error("Heartbeat future get failed ,endpoint={}", p.getEndpoint().toString());
                                 }
                             } else {
-                                replicatorManager.removeReplicator(p.getEndpoint());
+                                rm.removeReplicator(p.getEndpoint());
                                 log.error("Session timeout in {} ms, endpoint={}, this replicator would be removed by replicator manager", timeout, p.getEndpoint().toString());
                             }
                         }
@@ -493,6 +597,14 @@ public class NodeEngine implements Node {
                     log.error("HeartbeatTask sleeping thread was interrupted");
                 }
             }
+        }
+    }
+
+    public class HeartbeatCheckTask implements Runnable {
+
+        @Override
+        public void run() {
+            // TODO
         }
     }
 }

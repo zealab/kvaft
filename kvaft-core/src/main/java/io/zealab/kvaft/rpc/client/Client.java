@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 import static io.zealab.kvaft.util.NettyUtil.getClientSocketChannelClass;
@@ -57,30 +58,34 @@ public class Client implements Initializer {
      */
     public void invokeOneWay(KvaftMessage<?> req, int cTimeout, int soTimeout) {
         ensureInitialize();
-        final Channel channel = createChannel(cTimeout);
-        Assert.notNull(channel, "channel future could not be null");
-        long begin = System.currentTimeMillis();
-        try {
-            // tips: channel.writeAndFlush is thread-safe
-            channel.writeAndFlush(req).addListener(
-                    (ChannelFutureListener) future -> {
-                        while (!future.isDone() && System.currentTimeMillis() - begin <= soTimeout) {
-                            Thread.sleep(1000);
-                        }
-                        if (!future.isDone()) {
-                            log.error("rpc request socket timeout in {} ms.", soTimeout);
-                            return;
-                        }
-                        if (!future.isSuccess()) {
-                            log.error("rpc request failed.", future.cause());
+        Optional.ofNullable(
+                createChannel(cTimeout)
+        ).ifPresent(
+                channel -> {
+                    long begin = System.currentTimeMillis();
+                    try {
+                        // tips: channel.writeAndFlush is thread-safe
+                        channel.writeAndFlush(req).addListener(
+                                (ChannelFutureListener) future -> {
+                                    while (!future.isDone() && System.currentTimeMillis() - begin <= soTimeout) {
+                                        Thread.sleep(1000);
+                                    }
+                                    if (!future.isDone()) {
+                                        log.error("rpc request socket timeout in {} ms.", soTimeout);
+                                        return;
+                                    }
+                                    if (!future.isSuccess()) {
+                                        log.error("rpc request failed.", future.cause());
 
-                        }
-                        log.info("rpc request successfully.");
+                                    }
+                                    log.info("rpc request successfully.");
+                                }
+                        );
+                    } finally {
+                        channelPool.release(channel);
                     }
-            );
-        } finally {
-            channelPool.release(channel);
-        }
+                }
+        );
     }
 
     /**
@@ -92,32 +97,37 @@ public class Client implements Initializer {
      */
     public void invokeWithCallback(KvaftMessage<?> req, int cTimeout, int soTimeout, Callback callback) {
         ensureInitialize();
-        final Channel channel = createChannel(cTimeout);
-        Assert.notNull(channel, "channel future could not be null");
-        long begin = System.currentTimeMillis();
-        try {
-            // put callback function into context
-            context.put(req.requestId(), callback);
-            // tips: channel.writeAndFlush is thread-safe
-            channel.writeAndFlush(req).addListener(
-                    (ChannelFutureListener) future -> {
-                        while (!future.isDone() && System.currentTimeMillis() - begin <= soTimeout) {
-                            Thread.sleep(1000);
-                        }
-                        if (!future.isDone()) {
-                            log.error("rpc request socket timeout in {} ms.", soTimeout);
-                            return;
-                        }
-                        if (!future.isSuccess()) {
-                            log.error("rpc request failed.", future.cause());
+        Optional.ofNullable(
+                createChannel(cTimeout)
+        ).ifPresent(
+                channel -> {
+                    final long begin = System.currentTimeMillis();
+                    try {
+                        log.info("sending request to channel={}", channel.toString());
+                        // put callback function into context
+                        context.put(req.requestId(), callback);
+                        // tips: channel.writeAndFlush is thread-safe
+                        channel.writeAndFlush(req).addListener(
+                                (ChannelFutureListener) future -> {
+                                    while (!future.isDone() && System.currentTimeMillis() - begin <= soTimeout) {
+                                        Thread.sleep(1000);
+                                    }
+                                    if (!future.isDone()) {
+                                        log.error("rpc request socket timeout in {} ms.", soTimeout);
+                                        return;
+                                    }
+                                    if (!future.isSuccess()) {
+                                        log.error("rpc request failed.", future.cause());
 
-                        }
-                        log.info("rpc request successfully.");
+                                    }
+                                    log.info("rpc request successfully.");
+                                }
+                        );
+                    } finally {
+                        channelPool.release(channel);
                     }
-            );
-        } finally {
-            channelPool.release(channel);
-        }
+                }
+        );
     }
 
     /**
@@ -140,7 +150,6 @@ public class Client implements Initializer {
     private Channel createChannel(int cTimeout) {
         ensureInitialize();
         final Future<Channel> channelFuture = channelPool.acquire();
-        Assert.notNull(channelFuture, "channel future could not be null");
         try {
             return channelFuture.get(cTimeout, TimeUnit.MILLISECONDS);
         } catch (CancellationException e) {

@@ -34,6 +34,11 @@ public interface Node extends Initializer {
     Participant leader();
 
     /**
+     * assign leader
+     */
+    void assignLeader(Participant leader);
+
+    /**
      * It will authorize when the follow three conditions satisfied:
      *
      * 1. Term which the peer offers must greater than or equal current term;
@@ -65,4 +70,12 @@ public interface Node extends Initializer {
      * @param offerTerm  offerTerm
      */
     void handleHeartbeat(Peer peer, long requestId, long offerTerm);
+
+    /**
+     * This method handles other new participant acquiring for leader information
+     *
+     * @param peer       client
+     * @param requestId  requestId
+     */
+    void handleLeaderAcquire(Peer peer, long requestId);
 }

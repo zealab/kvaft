@@ -8,8 +8,6 @@ import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.util.Assert;
 
 /**
- * @param <T>
- *
  * @author LeonWong
  */
 public abstract class RequestProcessor<T extends Message> extends AbstractProcessor {

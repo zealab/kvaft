@@ -12,6 +12,7 @@
         <module>kvaft-core</module>
         <module>kvaft-server</module>
         <module>kvaft-example</module>
+        <module>kvaft-persist</module>
     </modules>
 
     <properties>

@@ -18,7 +18,7 @@ public class NodeContext {
     /**
      * Avoiding authorized pre-vote request in the same term and same node
      */
-    private long termAcked;
+    private long lastTerm;
 
     /**
      * is heartbeat task on?
@@ -45,8 +45,8 @@ public class NodeContext {
         electionConfirmQueue.addSignalIfNx(endpoint, term);
     }
 
-    public long getTermAcked() {
-        return termAcked;
+    public long getLastTerm() {
+        return lastTerm;
     }
 
     public int preVoteConfirmQueueSize() {
@@ -68,29 +68,22 @@ public class NodeContext {
      * @return
      */
     public boolean isAuthorizable(long offerTerm) {
-        return termAcked < offerTerm;
+        return this.lastTerm < offerTerm;
     }
 
-    public void setTermAcked(long termAcked) {
-        this.termAcked = termAcked;
+    public void setLastTerm(long lastTerm) {
+        this.lastTerm = lastTerm;
     }
 
     public boolean isHeartbeatOn() {
         return heartbeatOn;
     }
 
-    public NodeContext setHeartbeatOn(boolean heartbeatOn) {
-        this.heartbeatOn = heartbeatOn;
-        return this;
+    public void turnOffHeartbeat() {
+        this.heartbeatOn = false;
     }
 
-    /**
-     * get quorum qty
-     *
-     * @param totalQty node qty
-     * @return
-     */
-    public int getQuorum(int totalQty) {
-        return totalQty / 2 + 1;
+    public void turnOnHeartbeat() {
+        this.heartbeatOn = true;
     }
 }

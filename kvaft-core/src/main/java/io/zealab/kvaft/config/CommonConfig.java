@@ -3,6 +3,7 @@ package io.zealab.kvaft.config;
 import com.google.common.collect.Lists;
 import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Participant;
+import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 import lombok.Data;
 
 import java.util.List;
@@ -52,5 +53,9 @@ public class CommonConfig {
 
     public boolean isValidParticipant(Participant p) {
         return participants.contains(p);
+    }
+
+    public int getQuorum() {
+        return participants.size() / 2 + 1;
     }
 }

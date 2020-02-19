@@ -4,6 +4,9 @@ import io.zealab.kvaft.config.Processor;
 import io.zealab.kvaft.core.Peer;
 import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 
+/**
+ * @author LeonWong
+ */
 @Processor(messageClazz = RemoteCalls.ElectReq.class)
 public class ElectingProcessor extends RequestProcessor<RemoteCalls.ElectReq> {
 
