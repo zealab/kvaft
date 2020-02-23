@@ -13,6 +13,7 @@ import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 import io.zealab.kvaft.util.Assert;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.annotation.Nullable;
@@ -84,12 +85,13 @@ public class NodeEngine implements Node {
     @Override
     public void start() {
         server.start();
-        Participant leader = acquireLeader();
-        if (leader == null) {
-            startSleepTimeoutTask();
-        } else {
-            assignLeader(leader);
+        Pair<Participant, Long> leader = acquireLeader();
+        Assert.notNull(leader, "leader must not be null");
+        if (leader.getLeft() != null) {
+            assignLeader(leader.getLeft(), leader.getRight());
+            return;
         }
+        startSleepTimeoutTask();
     }
 
     @Override
@@ -109,10 +111,14 @@ public class NodeEngine implements Node {
     }
 
     @Override
-    public void assignLeader(Participant candidate) {
+    public void assignLeader(Participant candidate, Long term) {
         Lock wLock = lock.writeLock();
         try {
             wLock.lock();
+            if (null != term) {
+                this.term.set(term);
+                this.context.setLastTerm(term);
+            }
             this.state = NodeState.ELECTED;
             this.leader = candidate;
         } finally {
@@ -129,10 +135,9 @@ public class NodeEngine implements Node {
             wLock.lock();
             long currTerm = currTerm();
             boolean doAuthorize = currTerm <= offerTerm
-                    && context.isAuthorizable(offerTerm);
+                    && setLastTerm(offerTerm);
             if (doAuthorize) {
                 term.set(offerTerm);
-                context.setLastTerm(offerTerm);
                 state = NodeState.ELECTING;
                 authorized = true;
             }
@@ -155,10 +160,9 @@ public class NodeEngine implements Node {
             boolean doAuthorize = currTerm <= offerTerm
                     && ensureState(NodeState.ELECTING);
             if (doAuthorize) {
-                term.set(offerTerm);
                 Participant p = Participant.from(peer.getEndpoint(), false);
                 if (this.commonConfig.isValidParticipant(p)) {
-                    assignLeader(p);
+                    assignLeader(p, offerTerm);
                     authorized = true;
                 }
             }
@@ -173,7 +177,16 @@ public class NodeEngine implements Node {
     @Override
     public void handleHeartbeat(Peer peer, long requestId, long offerTerm) {
         Channel channel = peer.getChannel();
-        if (offerTerm == term.get() && ensureState(NodeState.ELECTED)) {
+        Lock rLock = lock.readLock();
+        boolean shouldResponse;
+        try {
+            rLock.lock();
+            // atomic read
+            shouldResponse = offerTerm == term.get() && ensureState(NodeState.ELECTED);
+        } finally {
+            rLock.unlock();
+        }
+        if (shouldResponse) {
             RemoteCalls.HeartbeatAck heartbeatAck = RemoteCalls.HeartbeatAck.newBuilder().setTimestamp(System.currentTimeMillis()).build();
             KvaftMessage<RemoteCalls.HeartbeatAck> kvaftMessage = KvaftMessage.<RemoteCalls.HeartbeatAck>builder().payload(heartbeatAck).requestId(requestId).build();
             channel.writeAndFlush(kvaftMessage);
@@ -187,10 +200,17 @@ public class NodeEngine implements Node {
         try {
             rLock.lock();
             Participant leader = leader();
-            if (ensureState(NodeState.ELECTED) && !leader.isOntology()) {
+            if (ensureState(NodeState.ELECTED)) {
                 Long term = currTerm();
-                RemoteCalls.BindAddress address = RemoteCalls.BindAddress.newBuilder().setHost(leader.getEndpoint().getIp()).setPort(leader.getEndpoint().getPort()).build();
-                RemoteCalls.AcquireLeaderResp resp = RemoteCalls.AcquireLeaderResp.newBuilder().setLeaderAddress(address).setTerm(term).build();
+                RemoteCalls.BindAddress address = RemoteCalls.BindAddress.newBuilder()
+                        .setHost(leader.getEndpoint().getIp())
+                        .setPort(leader.getEndpoint().getPort())
+                        .build();
+                RemoteCalls.AcquireLeaderResp resp = RemoteCalls.AcquireLeaderResp.newBuilder()
+                        .setLeaderAddress(address)
+                        .setIsOntology(leader.isOntology())
+                        .setTerm(term)
+                        .build();
                 KvaftMessage<RemoteCalls.AcquireLeaderResp> kvaftMessage = KvaftMessage.<RemoteCalls.AcquireLeaderResp>builder().payload(resp).requestId(requestId).build();
                 channel.writeAndFlush(kvaftMessage);
             }
@@ -229,7 +249,7 @@ public class NodeEngine implements Node {
             }
             state = NodeState.ELECTING;
             context.resetElectionConfirmQueue(term);
-            startElectionConfirmingTask();
+            startElectionConfirmingTask(term);
         } finally {
             wLock.unlock();
         }
@@ -259,6 +279,21 @@ public class NodeEngine implements Node {
         asyncExecutor.execute(new HeartbeatTask());
     }
 
+    public boolean setLastTerm(long offerTerm) {
+        Lock wLock = lock.writeLock();
+        try {
+            wLock.lock();
+            if (context.isAuthorizable(offerTerm)) {
+                context.setLastTerm(offerTerm);
+                return true;
+            } else {
+                return false;
+            }
+        } finally {
+            wLock.unlock();
+        }
+    }
+
     /**
      * starting a heartbeat check task
      */
@@ -269,8 +304,8 @@ public class NodeEngine implements Node {
     /**
      * starting a election confirming task
      */
-    public void startElectionConfirmingTask() {
-        asyncExecutor.execute(new ElectionConfirmingTask());
+    public void startElectionConfirmingTask(long term) {
+        asyncExecutor.execute(new ElectionConfirmingTask(term));
     }
 
     private void broadcastPreVoteMsg(long termVal) {
@@ -417,8 +452,9 @@ public class NodeEngine implements Node {
      * @return leader
      */
     @Nullable
-    public Participant acquireLeader() {
-        Map<RemoteCalls.BindAddress, Long> counted = commonConfig.getParticipants()
+    public Pair<Participant, Long> acquireLeader() {
+        final Long[] term = {currTerm()};
+        Map<Participant, Long> counted = commonConfig.getParticipants()
                 .parallelStream()
                 .filter(e -> !e.isOntology())
                 .map(
@@ -433,7 +469,8 @@ public class NodeEngine implements Node {
                             }
                             try {
                                 RemoteCalls.AcquireLeaderResp resp = respFuture.get();
-                                return resp.getLeaderAddress();
+                                term[0] = Math.max(term[0], resp.getTerm());
+                                return resp.getIsOntology() ? p : Participant.from(resp.getLeaderAddress(), false);
                             } catch (InterruptedException | ExecutionException e) {
                                 log.error("something's wrong with acquiring leader");
                             }
@@ -441,10 +478,9 @@ public class NodeEngine implements Node {
                         }
                 ).filter(Objects::nonNull).collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
-        List<RemoteCalls.BindAddress> possibleLeaders = counted.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).collect(Collectors.toList());
-        return possibleLeaders.size() > 0
-                ? Participant.from(possibleLeaders.get(possibleLeaders.size() - 1), false)
-                : null;
+        List<Participant> possibleLeaders = counted.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).collect(Collectors.toList());
+        Participant leader = possibleLeaders.size() > 0 ? possibleLeaders.get(possibleLeaders.size() - 1) : null;
+        return Pair.of(leader, term[0]);
     }
 
     /**
@@ -470,12 +506,14 @@ public class NodeEngine implements Node {
                     wLock.lock();
                     if (ensureNotState(NodeState.FOLLOWING)) {
                         // double check for thread safety
-                        log.info("Sleeping timeout task interrupted, cause state was changed in the middle of process");
+                        log.info("Sleeping timeout task interrupted, cause state was changed in the middle of process.");
                         return;
                     }
                     termVal = term.incrementAndGet();
-                    if (context.isAuthorizable(termVal)) {
-                        context.setLastTerm(termVal);
+                    boolean isOk = setLastTerm(termVal);
+                    if (!isOk) {
+                        log.info("Sleeping timeout task interrupted, cause this term={} was not authorized", termVal);
+                        return;
                     }
                 } finally {
                     wLock.unlock();
@@ -530,6 +568,12 @@ public class NodeEngine implements Node {
      */
     public class ElectionConfirmingTask implements Runnable {
 
+        private final long term;
+
+        public ElectionConfirmingTask(long term) {
+            this.term = term;
+        }
+
         @Override
         public void run() {
             long begin = System.currentTimeMillis();
@@ -537,11 +581,19 @@ public class NodeEngine implements Node {
             while (System.currentTimeMillis() - begin < commonConfig.getElectConfirmTimeout()) {
                 int size = context.electionConfirmQueueSize();
                 if (size >= quorum) {
-                    log.info("The election is complete in term={}, election confirmed size={}", currTerm(), size);
-                    assignLeader(Participant.from(commonConfig.getBindEndpoint(), true));
-                    // starting heartbeat task
-                    startHeartbeatTask();
-                    startHeartbeatCheckTask();
+                    Lock rLock = lock.readLock();
+                    try {
+                        rLock.lock();
+                        if (ensureState(NodeState.ELECTING)) {
+                            log.info("The election is complete in term={}, election confirmed size={}", currTerm(), size);
+                            assignLeader(Participant.from(commonConfig.getBindEndpoint(), true), null);
+                            // starting heartbeat task
+                            startHeartbeatTask();
+                            startHeartbeatCheckTask();
+                        }
+                    } finally {
+                        rLock.unlock();
+                    }
                     return;
                 }
                 // sleep for a second
@@ -565,7 +617,7 @@ public class NodeEngine implements Node {
 
         @Override
         public void run() {
-            while (context.isHeartbeatOn() && state.equals(NodeState.ELECTED)) {
+            while (context.isHeartbeatOn() && ensureState(NodeState.ELECTED)) {
                 long begin = System.currentTimeMillis();
                 long currTerm = currTerm();
                 commonConfig.getParticipants().parallelStream().filter(e -> !e.isOntology()).forEach(
@@ -600,6 +652,10 @@ public class NodeEngine implements Node {
         }
     }
 
+    /**
+     * 1. Checking peers from client if is out of session timeout ?
+     * 2. Checking replicator client who connects to the leader if is out of session timeout ?
+     */
     public class HeartbeatCheckTask implements Runnable {
 
         @Override

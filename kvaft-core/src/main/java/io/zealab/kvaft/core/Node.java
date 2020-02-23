@@ -36,7 +36,7 @@ public interface Node extends Initializer {
     /**
      * assign leader
      */
-    void assignLeader(Participant leader);
+    void assignLeader(Participant leader, Long term);
 
     /**
      * It will authorize when the follow three conditions satisfied:

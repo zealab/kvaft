@@ -3245,6 +3245,12 @@ public final class RemoteCalls {
      * <code>.io.zealab.kvaft.rpc.protoc.BindAddress leaderAddress = 2;</code>
      */
     io.zealab.kvaft.rpc.protoc.RemoteCalls.BindAddressOrBuilder getLeaderAddressOrBuilder();
+
+    /**
+     * <code>bool isOntology = 3;</code>
+     * @return The isOntology.
+     */
+    boolean getIsOntology();
   }
   /**
    * Protobuf type {@code io.zealab.kvaft.rpc.protoc.AcquireLeaderResp}
@@ -3307,6 +3313,11 @@ public final class RemoteCalls {
                 leaderAddress_ = subBuilder.buildPartial();
               }
 
+              break;
+            }
+            case 24: {
+
+              isOntology_ = input.readBool();
               break;
             }
             default: {
@@ -3374,6 +3385,16 @@ public final class RemoteCalls {
       return getLeaderAddress();
     }
 
+    public static final int ISONTOLOGY_FIELD_NUMBER = 3;
+    private boolean isOntology_;
+    /**
+     * <code>bool isOntology = 3;</code>
+     * @return The isOntology.
+     */
+    public boolean getIsOntology() {
+      return isOntology_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3394,6 +3415,9 @@ public final class RemoteCalls {
       if (leaderAddress_ != null) {
         output.writeMessage(2, getLeaderAddress());
       }
+      if (isOntology_ != false) {
+        output.writeBool(3, isOntology_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -3410,6 +3434,10 @@ public final class RemoteCalls {
       if (leaderAddress_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, getLeaderAddress());
+      }
+      if (isOntology_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, isOntology_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3433,6 +3461,8 @@ public final class RemoteCalls {
         if (!getLeaderAddress()
             .equals(other.getLeaderAddress())) return false;
       }
+      if (getIsOntology()
+          != other.getIsOntology()) return false;
       if (!unknownFields.equals(other.unknownFields)) return false;
       return true;
     }
@@ -3451,6 +3481,9 @@ public final class RemoteCalls {
         hash = (37 * hash) + LEADERADDRESS_FIELD_NUMBER;
         hash = (53 * hash) + getLeaderAddress().hashCode();
       }
+      hash = (37 * hash) + ISONTOLOGY_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsOntology());
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -3592,6 +3625,8 @@ public final class RemoteCalls {
           leaderAddress_ = null;
           leaderAddressBuilder_ = null;
         }
+        isOntology_ = false;
+
         return this;
       }
 
@@ -3624,6 +3659,7 @@ public final class RemoteCalls {
         } else {
           result.leaderAddress_ = leaderAddressBuilder_.build();
         }
+        result.isOntology_ = isOntology_;
         onBuilt();
         return result;
       }
@@ -3677,6 +3713,9 @@ public final class RemoteCalls {
         }
         if (other.hasLeaderAddress()) {
           mergeLeaderAddress(other.getLeaderAddress());
+        }
+        if (other.getIsOntology() != false) {
+          setIsOntology(other.getIsOntology());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -3854,6 +3893,36 @@ public final class RemoteCalls {
           leaderAddress_ = null;
         }
         return leaderAddressBuilder_;
+      }
+
+      private boolean isOntology_ ;
+      /**
+       * <code>bool isOntology = 3;</code>
+       * @return The isOntology.
+       */
+      public boolean getIsOntology() {
+        return isOntology_;
+      }
+      /**
+       * <code>bool isOntology = 3;</code>
+       * @param value The isOntology to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsOntology(boolean value) {
+        
+        isOntology_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool isOntology = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsOntology() {
+        
+        isOntology_ = false;
+        onChanged();
+        return this;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -5212,14 +5281,14 @@ public final class RemoteCalls {
       "amp\030\001 \001(\003\"\032\n\nPreVoteReq\022\014\n\004term\030\003 \001(\004\".\n" +
       "\nPreVoteAck\022\014\n\004term\030\001 \001(\004\022\022\n\nauthorized\030" +
       "\002 \001(\010\"%\n\020AcquireLeaderReq\022\021\n\ttimestamp\030\001" +
-      " \001(\003\"a\n\021AcquireLeaderResp\022\014\n\004term\030\001 \001(\003\022" +
+      " \001(\003\"u\n\021AcquireLeaderResp\022\014\n\004term\030\001 \001(\003\022" +
       ">\n\rleaderAddress\030\002 \001(\0132\'.io.zealab.kvaft" +
-      ".rpc.protoc.BindAddress\"R\n\010ElectReq\022\014\n\004t" +
-      "erm\030\001 \001(\004\0228\n\007address\030\002 \001(\0132\'.io.zealab.k" +
-      "vaft.rpc.protoc.BindAddress\"-\n\tElectResp" +
-      "\022\014\n\004term\030\001 \001(\004\022\022\n\nauthorized\030\002 \001(\010B)\n\032io" +
-      ".zealab.kvaft.rpc.protocB\013RemoteCallsb\006p" +
-      "roto3"
+      ".rpc.protoc.BindAddress\022\022\n\nisOntology\030\003 " +
+      "\001(\010\"R\n\010ElectReq\022\014\n\004term\030\001 \001(\004\0228\n\007address" +
+      "\030\002 \001(\0132\'.io.zealab.kvaft.rpc.protoc.Bind" +
+      "Address\"-\n\tElectResp\022\014\n\004term\030\001 \001(\004\022\022\n\nau" +
+      "thorized\030\002 \001(\010B)\n\032io.zealab.kvaft.rpc.pr" +
+      "otocB\013RemoteCallsb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -5266,7 +5335,7 @@ public final class RemoteCalls {
     internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderResp_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_io_zealab_kvaft_rpc_protoc_AcquireLeaderResp_descriptor,
-        new java.lang.String[] { "Term", "LeaderAddress", });
+        new java.lang.String[] { "Term", "LeaderAddress", "IsOntology", });
     internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_descriptor =
       getDescriptor().getMessageTypes().get(7);
     internal_static_io_zealab_kvaft_rpc_protoc_ElectReq_fieldAccessorTable = new
