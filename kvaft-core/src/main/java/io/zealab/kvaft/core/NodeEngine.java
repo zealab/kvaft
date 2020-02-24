@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -71,10 +72,19 @@ public class NodeEngine implements Node {
             new ThreadPoolExecutor.AbortPolicy()
     );
 
+    private final ScheduledExecutorService sleepTimeoutScheduler = Executors.newScheduledThreadPool(1);
+
+    private final ScheduledExecutorService heartbeatCheckScheduler = Executors.newScheduledThreadPool(1);
+
     @Override
     public boolean isLeader() {
         Participant leader = leader();
         return leader != null && leader.isOntology();
+    }
+
+    @Override
+    public Participant self() {
+        return Participant.from(commonConfig.getBindEndpoint(), true);
     }
 
     @Override
@@ -89,9 +99,8 @@ public class NodeEngine implements Node {
         Assert.notNull(leader, "leader must not be null");
         if (leader.getLeft() != null) {
             assignLeader(leader.getLeft(), leader.getRight());
-            return;
         }
-        startSleepTimeoutTask();
+        scheduleSleepTimeoutTask();
     }
 
     @Override
@@ -116,10 +125,14 @@ public class NodeEngine implements Node {
         try {
             wLock.lock();
             if (null != term) {
-                this.term.set(term);
-                this.context.setLastTerm(term);
+                if (!updateLastTerm(term)) {
+                    log.error("could not assign leader=[{}] in this term=[{}],cause someone had occupied in this term", candidate.toString(), term);
+                    return;
+                }
+                updateTerm(term, NodeState.ELECTED);
+            } else {
+                this.state = NodeState.ELECTED;
             }
-            this.state = NodeState.ELECTED;
             this.leader = candidate;
         } finally {
             wLock.unlock();
@@ -133,12 +146,9 @@ public class NodeEngine implements Node {
         Lock wLock = lock.writeLock();
         try {
             wLock.lock();
-            long currTerm = currTerm();
-            boolean doAuthorize = currTerm <= offerTerm
-                    && setLastTerm(offerTerm);
+            boolean doAuthorize = isTermValid(offerTerm) && updateLastTerm(offerTerm);
             if (doAuthorize) {
-                term.set(offerTerm);
-                state = NodeState.ELECTING;
+                updateTerm(offerTerm, NodeState.ELECTING);
                 authorized = true;
             }
         } finally {
@@ -156,9 +166,7 @@ public class NodeEngine implements Node {
         Lock wLock = lock.writeLock();
         try {
             wLock.lock();
-            long currTerm = currTerm();
-            boolean doAuthorize = currTerm <= offerTerm
-                    && ensureState(NodeState.ELECTING);
+            boolean doAuthorize = isTermValid(offerTerm) && ensureState(NodeState.ELECTING);
             if (doAuthorize) {
                 Participant p = Participant.from(peer.getEndpoint(), false);
                 if (this.commonConfig.isValidParticipant(p)) {
@@ -247,8 +255,9 @@ public class NodeEngine implements Node {
                 log.info("interrupt the electing...");
                 return;
             }
-            state = NodeState.ELECTING;
-            context.resetElectionConfirmQueue(term);
+            this.state = NodeState.ELECTING;
+            this.context.resetElectionConfirmQueue(term);
+            // starting election confirming task.
             startElectionConfirmingTask(term);
         } finally {
             wLock.unlock();
@@ -257,29 +266,23 @@ public class NodeEngine implements Node {
         broadcastElectingMsg(term);
     }
 
-    public void reRunSleepTimeoutTask() {
-        this.state = NodeState.FOLLOWING;
-        startSleepTimeoutTask();
-    }
 
     /**
      * starting a sleep timeout task
      */
-    public void startSleepTimeoutTask() {
-        if (ensureState(NodeState.FOLLOWING)) {
-            asyncExecutor.execute(new SleepTimeoutTask());
-        }
+    public void scheduleSleepTimeoutTask() {
+        sleepTimeoutScheduler.scheduleAtFixedRate(new SleepTimeoutTask(), 5, 5, TimeUnit.SECONDS);
     }
 
     /**
      * starting a heartbeat task
      */
-    public void startHeartbeatTask() {
+    public void startHeartbeatTask(long currTerm) {
         context.turnOnHeartbeat();
-        asyncExecutor.execute(new HeartbeatTask());
+        asyncExecutor.execute(new HeartbeatTask(currTerm));
     }
 
-    public boolean setLastTerm(long offerTerm) {
+    public boolean updateLastTerm(long offerTerm) {
         Lock wLock = lock.writeLock();
         try {
             wLock.lock();
@@ -297,8 +300,8 @@ public class NodeEngine implements Node {
     /**
      * starting a heartbeat check task
      */
-    public void startHeartbeatCheckTask() {
-        asyncExecutor.execute(new HeartbeatCheckTask());
+    public void startHeartbeatCheckTask(long currTerm) {
+        heartbeatCheckScheduler.scheduleAtFixedRate(new HeartbeatCheckTask(currTerm), 5, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -399,7 +402,7 @@ public class NodeEngine implements Node {
             if (ensureState(NodeState.INVALID)) {
                 this.leader = null;
                 this.context.turnOffHeartbeat();
-                reRunSleepTimeoutTask();
+                this.state = NodeState.FOLLOWING;
             }
         } finally {
             wLock.unlock();
@@ -412,6 +415,21 @@ public class NodeEngine implements Node {
 
     private boolean ensureNotState(NodeState state) {
         return this.state.compareTo(state) != 0;
+    }
+
+    private boolean isTermValid(long offerTerm) {
+        return currTerm() <= offerTerm;
+    }
+
+    /**
+     * This method is not thread safe, it must be carefully when you use it
+     *
+     * @param termVal the term need to update
+     * @param state   the state need to update
+     */
+    private void updateTerm(long termVal, NodeState state) {
+        this.state = state;
+        this.term.set(termVal);
     }
 
     private void parseConfigFile() {
@@ -446,7 +464,7 @@ public class NodeEngine implements Node {
 
     /**
      * acquire for leader information
-     *
+     * <p>
      * if the leader itself is current node, alter current state into ELECTED
      *
      * @return leader
@@ -485,49 +503,50 @@ public class NodeEngine implements Node {
 
     /**
      * When the sleep thread task awakes, it will broadcast preVote message to every node.
-     *
-     * TODO everlasting
      */
     public class SleepTimeoutTask implements Runnable {
 
         @Override
         public void run() {
-            Random random = new Random();
+            if (ensureNotState(NodeState.FOLLOWING)) {
+                log.debug("The current node is not in FOLLOWING state, no need to execute SleepTimeoutTask");
+                return;
+            }
+            SecureRandom random = new SecureRandom();
             int r = random.nextInt(5000);
             try {
                 Thread.sleep(r);
             } catch (InterruptedException e) {
                 log.error("SleepTimeoutTask was interrupted", e);
             }
-            if (ensureState(NodeState.FOLLOWING)) {
-                long termVal;
-                Lock wLock = lock.writeLock();
-                try {
-                    wLock.lock();
-                    if (ensureNotState(NodeState.FOLLOWING)) {
-                        // double check for thread safety
-                        log.info("Sleeping timeout task interrupted, cause state was changed in the middle of process.");
-                        return;
-                    }
-                    termVal = term.incrementAndGet();
-                    boolean isOk = setLastTerm(termVal);
-                    if (!isOk) {
-                        log.info("Sleeping timeout task interrupted, cause this term={} was not authorized", termVal);
-                        return;
-                    }
-                } finally {
-                    wLock.unlock();
+
+            long termVal;
+            Lock wLock = lock.writeLock();
+            try {
+                wLock.lock();
+                // double check node state
+                if (ensureNotState(NodeState.FOLLOWING)) {
+                    log.info("Sleeping timeout task interrupted, cause the state was changed in the middle of process.");
+                    return;
                 }
-                // starting to check pre vote acknowledges
-                startPreVoteConfirmingTask(termVal);
-                // broadcasting preVote message
-                broadcastPreVoteMsg(termVal);
+                termVal = term.incrementAndGet();
+                boolean isOk = updateLastTerm(termVal);
+                if (!isOk) {
+                    log.info("Sleeping timeout task interrupted, cause this term={} was not authorized", termVal);
+                    return;
+                }
+            } finally {
+                wLock.unlock();
             }
+            // starting to check pre vote acknowledges
+            startPreVoteConfirmingTask(termVal);
+            // broadcasting preVote message
+            broadcastPreVoteMsg(termVal);
         }
     }
 
     /**
-     * spin check for preVote ack info
+     * PreVote acknowledges confirming
      */
     public class PreVoteConfirmingTask implements Runnable {
 
@@ -559,7 +578,6 @@ public class NodeEngine implements Node {
                 }
             }
             log.warn("PreVoteConfirmingTask timeout in {} ms", commonConfig.getPreVoteConfirmTimeout());
-            reRunSleepTimeoutTask();
         }
     }
 
@@ -584,12 +602,12 @@ public class NodeEngine implements Node {
                     Lock rLock = lock.readLock();
                     try {
                         rLock.lock();
-                        if (ensureState(NodeState.ELECTING)) {
-                            log.info("The election is complete in term={}, election confirmed size={}", currTerm(), size);
-                            assignLeader(Participant.from(commonConfig.getBindEndpoint(), true), null);
+                        if (term == currTerm() && ensureState(NodeState.ELECTING)) {
+                            log.info("The whole election process is complete with this term={}, and the quantity of election confirmed is {}", currTerm(), size);
+                            assignLeader(self(), null);
                             // starting heartbeat task
-                            startHeartbeatTask();
-                            startHeartbeatCheckTask();
+                            startHeartbeatTask(term);
+                            startHeartbeatCheckTask(term);
                         }
                     } finally {
                         rLock.unlock();
@@ -604,7 +622,6 @@ public class NodeEngine implements Node {
                 }
             }
             log.warn("ElectionConfirmingTask timeout in {} ms", commonConfig.getElectConfirmTimeout());
-            reRunSleepTimeoutTask();
         }
     }
 
@@ -615,11 +632,16 @@ public class NodeEngine implements Node {
 
         private final int timeout = 5000;
 
+        private final long currTerm;
+
+        public HeartbeatTask(long currTerm) {
+            this.currTerm = currTerm;
+        }
+
         @Override
         public void run() {
             while (context.isHeartbeatOn() && ensureState(NodeState.ELECTED)) {
                 long begin = System.currentTimeMillis();
-                long currTerm = currTerm();
                 commonConfig.getParticipants().parallelStream().filter(e -> !e.isOntology()).forEach(
                         p -> {
                             Future<RemoteCalls.HeartbeatAck> ackFuture = stub.heartbeat(p.getEndpoint(), currTerm);
@@ -658,9 +680,15 @@ public class NodeEngine implements Node {
      */
     public class HeartbeatCheckTask implements Runnable {
 
+        private final long currTerm;
+
+        public HeartbeatCheckTask(long currTerm) {
+            this.currTerm = currTerm;
+        }
+
         @Override
         public void run() {
-            // TODO
+           // TODO
         }
     }
 }
