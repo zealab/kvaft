@@ -33,8 +33,8 @@ public class ResponseProcessor extends AbstractProcessor {
         Peer peer = Peer.from(channel);
         Assert.notNull(peer, "peer could not be null");
         // replace it
-        Replicator replicator = rm.getReplicator(peer.getEndpoint().toString());
-        Assert.notNull(replicator, "The replicator is not existed");
+        Replicator replicator = rm.getReplicator(peer);
+        Assert.notNull(replicator, String.format("The remote peer=%s is not available.", peer.getEndpoint().toString()));
         Map<Long, Callback> context = replicator.getClient().getClientContext();
         Optional.ofNullable(
                 context.get(msg.requestId())

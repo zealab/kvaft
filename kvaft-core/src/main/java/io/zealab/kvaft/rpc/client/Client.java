@@ -12,7 +12,6 @@ import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Initializer;
 import io.zealab.kvaft.rpc.Callback;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
-import io.zealab.kvaft.util.Assert;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;

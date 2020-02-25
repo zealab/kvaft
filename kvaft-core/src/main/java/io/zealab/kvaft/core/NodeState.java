@@ -19,9 +19,4 @@ public enum NodeState {
      * as a leader
      */
     ELECTED,
-
-    /**
-     * invalid node
-     */
-    INVALID
 }

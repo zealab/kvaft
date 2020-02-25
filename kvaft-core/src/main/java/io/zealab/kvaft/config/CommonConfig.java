@@ -3,7 +3,6 @@ package io.zealab.kvaft.config;
 import com.google.common.collect.Lists;
 import io.zealab.kvaft.core.Endpoint;
 import io.zealab.kvaft.core.Participant;
-import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 import lombok.Data;
 
 import java.util.List;
@@ -50,6 +49,11 @@ public class CommonConfig {
      * 5000 ms interval for heartbeat from leader to follower
      */
     private int heartbeatInterval = 5000;
+
+    /**
+     * 20000 ms session timeout for the peers who send heartbeat to the local
+     */
+    private int peersSessionTimeout = 20000;
 
     public boolean isValidParticipant(Participant p) {
         return participants.contains(p);

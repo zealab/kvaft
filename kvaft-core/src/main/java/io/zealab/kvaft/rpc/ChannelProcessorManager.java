@@ -132,23 +132,52 @@ public class ChannelProcessorManager implements Scanner {
         }
     }
 
+    public void clearAllPeers() {
+        final Lock wl = peersLock.writeLock();
+        try {
+            wl.lock();
+            peers.entrySet().parallelStream().forEach(
+                    entry -> {
+                        Peer p = entry.getValue();
+                        log.info("peer={} will be closed soon..", p.toString());
+                        p.close();
+                    }
+            );
+            peers.clear();
+        } finally {
+            wl.unlock();
+        }
+    }
+
+    public int peerSize() {
+        final Lock rl = peersLock.readLock();
+        try {
+            rl.lock();
+            return peers.size();
+        } finally {
+            rl.unlock();
+        }
+    }
+
+
     /**
      * handle timeout channel validation
      *
      * @param timeoutMs timeout
      */
-    public void handleTimeoutPeers(int timeoutMs) {
+    public void handleSessionTimeoutPeers(int timeoutMs) {
         final long currTime = System.currentTimeMillis();
         final Lock rl = peersLock.readLock();
-        rl.lock();
         Map<String, Peer> copy;
         try {
+            rl.lock();
             copy = ImmutableMap.copyOf(peers);
         } finally {
             rl.unlock();
         }
         Lock wl = peersLock.writeLock();
         try {
+            wl.lock();
             copy.entrySet().parallelStream().forEach(
                     entry -> {
                         Peer peer = entry.getValue();

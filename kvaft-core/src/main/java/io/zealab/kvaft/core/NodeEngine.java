@@ -6,12 +6,11 @@ import io.zealab.kvaft.config.CommonConfig;
 import io.zealab.kvaft.config.GlobalScanner;
 import io.zealab.kvaft.rpc.ChannelProcessorManager;
 import io.zealab.kvaft.rpc.NioServer;
-import io.zealab.kvaft.rpc.client.ReplicatorManager;
-import io.zealab.kvaft.rpc.client.Stub;
-import io.zealab.kvaft.rpc.client.StubImpl;
+import io.zealab.kvaft.rpc.client.*;
 import io.zealab.kvaft.rpc.protoc.KvaftMessage;
 import io.zealab.kvaft.rpc.protoc.RemoteCalls;
 import io.zealab.kvaft.util.Assert;
+import io.zealab.kvaft.util.NamedThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.yaml.snakeyaml.Yaml;
@@ -59,11 +58,11 @@ public class NodeEngine implements Node {
 
     private final NodeContext context = new NodeContext();
 
-    private final static ChannelProcessorManager cpm = ChannelProcessorManager.getInstance();
+    private final ChannelProcessorManager cpm = ChannelProcessorManager.getInstance();
 
-    private final static ReplicatorManager rm = ReplicatorManager.getInstance();
+    private final ReplicatorManager rm = ReplicatorManager.getInstance();
 
-    private final static ExecutorService asyncExecutor = new ThreadPoolExecutor(
+    private final ExecutorService asyncExecutor = new ThreadPoolExecutor(
             Runtime.getRuntime().availableProcessors() * 2,
             Runtime.getRuntime().availableProcessors() * 2,
             30 * 10, TimeUnit.SECONDS,
@@ -74,7 +73,6 @@ public class NodeEngine implements Node {
 
     private final ScheduledExecutorService sleepTimeoutScheduler = Executors.newScheduledThreadPool(1);
 
-    private final ScheduledExecutorService heartbeatCheckScheduler = Executors.newScheduledThreadPool(1);
 
     @Override
     public boolean isLeader() {
@@ -125,12 +123,15 @@ public class NodeEngine implements Node {
         try {
             wLock.lock();
             if (null != term) {
+                // as a follower
                 if (!updateLastTerm(term)) {
                     log.error("could not assign leader=[{}] in this term=[{}],cause someone had occupied in this term", candidate.toString(), term);
                     return;
                 }
-                updateTerm(term, NodeState.ELECTED);
+                startLeaderReplicatorCheckTask(term);
+                updateTerm(term, NodeState.FOLLOWING);
             } else {
+                // as a leader
                 this.state = NodeState.ELECTED;
             }
             this.leader = candidate;
@@ -169,10 +170,8 @@ public class NodeEngine implements Node {
             boolean doAuthorize = isTermValid(offerTerm) && ensureState(NodeState.ELECTING);
             if (doAuthorize) {
                 Participant p = Participant.from(peer.getEndpoint(), false);
-                if (this.commonConfig.isValidParticipant(p)) {
-                    assignLeader(p, offerTerm);
-                    authorized = true;
-                }
+                assignLeader(p, offerTerm);
+                authorized = true;
             }
         } finally {
             wLock.unlock();
@@ -235,7 +234,7 @@ public class NodeEngine implements Node {
         GlobalScanner scanner = new GlobalScanner();
         scanner.init();
         // binding node
-        cpm.bindNode(this);
+        this.cpm.bindNode(this);
         // starting rpc server
         Endpoint bindAddress = commonConfig.getBindEndpoint();
         server = new NioServer(bindAddress.getIp(), bindAddress.getPort());
@@ -301,7 +300,13 @@ public class NodeEngine implements Node {
      * starting a heartbeat check task
      */
     public void startHeartbeatCheckTask(long currTerm) {
-        heartbeatCheckScheduler.scheduleAtFixedRate(new HeartbeatCheckTask(currTerm), 5, 10, TimeUnit.SECONDS);
+        HeartbeatCheckTask cmd = new HeartbeatCheckTask(currTerm);
+        cmd.scheduleAtFixRate();
+    }
+
+    public void startLeaderReplicatorCheckTask(long currTerm) {
+        LeaderReplicatorCheckTask cmd = new LeaderReplicatorCheckTask(currTerm);
+        cmd.scheduleAtFixRate();
     }
 
     /**
@@ -392,21 +397,27 @@ public class NodeEngine implements Node {
         this.configFileLocation = location;
     }
 
-    /**
-     * reset leader when heartbeat timeout
-     */
-    private void resetLeader() {
+    private void resetLeader(long term) {
         Lock wLock = lock.writeLock();
         try {
             wLock.lock();
-            if (ensureState(NodeState.INVALID)) {
-                this.leader = null;
+            if (term == currTerm() && ensureState(NodeState.ELECTED)) {
                 this.context.turnOffHeartbeat();
+                // clear replicator client who connects to leader;
+                if (null != this.leader) {
+                    this.rm.removeReplicator(leader.getEndpoint());
+                }
+                // TODO broadcast term invalid
+                // clear all peers
+                this.cpm.clearAllPeers();
+                // reset state and leader
+                this.leader = null;
                 this.state = NodeState.FOLLOWING;
             }
         } finally {
             wLock.unlock();
         }
+
     }
 
     private boolean ensureState(NodeState state) {
@@ -675,20 +686,80 @@ public class NodeEngine implements Node {
     }
 
     /**
-     * 1. Checking peers from client if is out of session timeout ?
-     * 2. Checking replicator client who connects to the leader if is out of session timeout ?
+     * This task is for leader.
+     * <p>
+     * Check the peers from client if its session is out of time.
      */
     public class HeartbeatCheckTask implements Runnable {
 
-        private final long currTerm;
+        private volatile ScheduledFuture<?> future;
 
-        public HeartbeatCheckTask(long currTerm) {
-            this.currTerm = currTerm;
+        private final ScheduledExecutorService heartbeatCheckScheduler = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("heartbeat-check-%d", false));
+
+        private final long term;
+
+        public HeartbeatCheckTask(long term) {
+            this.term = term;
         }
 
         @Override
         public void run() {
-           // TODO
+            if (ensureNotState(NodeState.ELECTED) || term != currTerm()) {
+                log.warn("The leader's term could has been changed, term of this task is {}", term);
+                future.cancel(false);
+                return;
+            }
+            // Check the peers from client if its session is out of time.
+            cpm.handleSessionTimeoutPeers(commonConfig.getPeersSessionTimeout());
+            if (cpm.peerSize() + 1 < commonConfig.getQuorum()) {
+                log.error("There is not enough peers available for current leader.");
+                future.cancel(false);
+                resetLeader(term);
+            }
+        }
+
+        public void scheduleAtFixRate() {
+            future = heartbeatCheckScheduler.scheduleAtFixedRate(this, 5, 10, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * This task is for follower.
+     * <p>
+     * Check the replicator client who connects to the leader if is available
+     */
+    public class LeaderReplicatorCheckTask implements Runnable {
+
+        private volatile ScheduledFuture<?> future;
+
+        private final ScheduledExecutorService leaderReplicatorScheduler = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("leader-replicator-check-%d", false));
+
+        private final long term;
+
+        public LeaderReplicatorCheckTask(long term) {
+            this.term = term;
+        }
+
+        @Override
+        public void run() {
+            if (leader == null || term != currTerm() || ensureNotState(NodeState.FOLLOWING)) {
+                log.warn("The follower's term could has been changed or leader was reset before probably ?, term of this task is {}", term);
+                future.cancel(false);
+                return;
+            }
+            Replicator leaderReplicator = rm.getReplicator(leader.getEndpoint().toString());
+            if (null == leaderReplicator) {
+                // Retry connecting to leader if client was broken
+                Client client = ClientFactory.getOrCreate(leader.getEndpoint());
+                leaderReplicator = rm.registerReplicator(leader.getEndpoint(), client);
+                log.info("Retry connecting to the leader, retry result is {}", leaderReplicator == null
+                        ? "failed"
+                        : "success");
+            }
+        }
+
+        public void scheduleAtFixRate() {
+            future = leaderReplicatorScheduler.scheduleAtFixedRate(this, 5, 10, TimeUnit.SECONDS);
         }
     }
 }

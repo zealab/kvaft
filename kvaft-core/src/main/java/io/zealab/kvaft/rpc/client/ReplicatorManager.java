@@ -31,10 +31,11 @@ public class ReplicatorManager {
         return SingletonHolder.instance;
     }
 
-    public void registerReplicator(Endpoint endpoint, Client client) {
+    public Replicator registerReplicator(Endpoint endpoint, Client client) {
         // expose client instance for another thread (maybe)
-        Replicator replicator = new Replicator(endpoint, client, ReplicatorState.CONNECTED);
+        Replicator replicator = new Replicator(endpoint, client);
         registerReplicator(replicator);
+        return replicator;
     }
 
     public void registerReplicator(Replicator replicator) {
@@ -51,7 +52,11 @@ public class ReplicatorManager {
         final Lock wl = replicatorLock.writeLock();
         try {
             wl.lock();
-            activeReplicators.remove(endpoint.toString());
+            Replicator replicator = activeReplicators.remove(endpoint.toString());
+            if (null != replicator) {
+                log.info("The replicator={} will be closed soon", replicator.toString());
+                replicator.close();
+            }
         } finally {
             wl.unlock();
         }
@@ -65,6 +70,15 @@ public class ReplicatorManager {
         } finally {
             rl.unlock();
         }
+    }
+
+    public Replicator getReplicator(Peer peer) {
+        Replicator replicator = this.getReplicator(peer.getEndpoint().toString());
+        if (null == replicator) {
+            Client client = ClientFactory.getOrCreate(peer.getEndpoint());
+            replicator = this.registerReplicator(peer.getEndpoint(), client);
+        }
+        return replicator;
     }
 
     public static class ReplicatorChannelPoolHandler implements ChannelPoolHandler {

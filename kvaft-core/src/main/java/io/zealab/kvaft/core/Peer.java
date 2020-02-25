@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Peer {
 
     /**
-     * ip + port
+     * This endpoint may not match in the configuration !
      */
     private Endpoint endpoint;
 
@@ -51,5 +51,9 @@ public class Peer {
             log.error("detected a bug here !");
             return null;
         }
+    }
+
+    public void close(){
+        channel.close();
     }
 }

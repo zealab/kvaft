@@ -1,13 +1,8 @@
 package io.zealab.kvaft.core;
 
 import io.zealab.kvaft.rpc.client.Client;
-import io.zealab.kvaft.rpc.client.StubImpl;
-import io.zealab.kvaft.util.TimerManager;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * replicator
@@ -22,21 +17,17 @@ public class Replicator {
 
     private Client client;
 
-    private volatile ReplicatorState state;
-
     public String nodeId() {
         return endpoint.toString();
     }
 
-    public Replicator(Endpoint endpoint, Client client, ReplicatorState state) {
+    public Replicator(Endpoint endpoint, Client client) {
         this.endpoint = endpoint;
         this.client = client;
-        this.state = state;
     }
 
     public synchronized void close() {
-        if (this.state == ReplicatorState.CONNECTED) {
-            this.state = ReplicatorState.DISCONNECTED;
+        if (null != client){
             client.close();
         }
     }

@@ -18,11 +18,11 @@ public class ClientFactory {
     private final static ReplicatorManager replicatorManager = ReplicatorManager.getInstance();
 
     /**
-     * client creator with double check
+     * Get or create client
      *
      * @param endpoint toWhere
      *
-     * @return
+     * @return client entity
      */
     @Nullable
     public static Client getOrCreate(@NonNull Endpoint endpoint) {
