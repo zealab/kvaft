@@ -34,4 +34,10 @@ public class StubImpl extends AbstractStub {
         RemoteCalls.ElectReq electReq = RemoteCalls.ElectReq.newBuilder().setTerm(term).setAddress(address).build();
         return doInvoke(endpoint, electReq);
     }
+
+    @Override
+    public void stepDown(Endpoint endpoint, long term) {
+        RemoteCalls.StepDownMsg stepDownMsg = RemoteCalls.StepDownMsg.newBuilder().setTerm(term).build();
+        doInvokeOneWay(endpoint, stepDownMsg, 5000, 1000);
+    }
 }

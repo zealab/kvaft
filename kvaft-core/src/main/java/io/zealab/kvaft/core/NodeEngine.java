@@ -150,6 +150,7 @@ public class NodeEngine implements Node {
             boolean doAuthorize = isTermValid(offerTerm) && updateLastTerm(offerTerm);
             if (doAuthorize) {
                 updateTerm(offerTerm, NodeState.ELECTING);
+                context.turnOffSleepTimeout();
                 authorized = true;
             }
         } finally {
@@ -254,6 +255,7 @@ public class NodeEngine implements Node {
                 log.info("interrupt the electing...");
                 return;
             }
+            this.context.turnOffSleepTimeout();
             this.state = NodeState.ELECTING;
             this.context.resetElectionConfirmQueue(term);
             // starting election confirming task.
@@ -270,6 +272,7 @@ public class NodeEngine implements Node {
      * starting a sleep timeout task
      */
     public void scheduleSleepTimeoutTask() {
+        context.turnOnSleepTimeout();
         sleepTimeoutScheduler.scheduleAtFixedRate(new SleepTimeoutTask(), 5, 5, TimeUnit.SECONDS);
     }
 
@@ -387,6 +390,26 @@ public class NodeEngine implements Node {
     }
 
     /**
+     * broadcast step-down message from leader
+     *
+     * @param termVal term
+     */
+    public void broadcastStepDownMsg(long termVal) {
+        commonConfig.getParticipants()
+                .parallelStream()
+                .filter(e -> !e.isOntology())
+                .forEach(
+                        participant -> {
+                            try {
+                                stub.stepDown(participant.getEndpoint(), termVal);
+                            } catch (Exception e) {
+                                log.error("broadcast step down message failed", e);
+                            }
+                        }
+                );
+    }
+
+    /**
      * starting a pre vote timeout task
      */
     public void startPreVoteConfirmingTask(long term) {
@@ -401,19 +424,30 @@ public class NodeEngine implements Node {
         Lock wLock = lock.writeLock();
         try {
             wLock.lock();
-            if (term == currTerm() && ensureState(NodeState.ELECTED)) {
-                this.context.turnOffHeartbeat();
+            if (term != currTerm()) {
+                log.warn("There's some weird, reset leader term is not match yet.");
+                return;
+            }
+            this.context.turnOffHeartbeat();
+            // for leader
+            if (ensureState(NodeState.ELECTED)) {
+                // broadcast step down message
+                broadcastStepDownMsg(term);
+                // clear all peers
+                this.cpm.clearAllPeers();
+
+            }
+            // for follower
+            if (ensureState(NodeState.FOLLOWING)) {
                 // clear replicator client who connects to leader;
                 if (null != this.leader) {
                     this.rm.removeReplicator(leader.getEndpoint());
                 }
-                // TODO broadcast term invalid
-                // clear all peers
-                this.cpm.clearAllPeers();
-                // reset state and leader
-                this.leader = null;
-                this.state = NodeState.FOLLOWING;
             }
+            // reset state and leader
+            this.leader = null;
+            this.state = NodeState.FOLLOWING;
+            this.context.turnOnSleepTimeout();
         } finally {
             wLock.unlock();
         }
@@ -473,6 +507,10 @@ public class NodeEngine implements Node {
         this.commonConfig.getParticipants().add(Participant.from(endpoint.toString(), true));
     }
 
+    private boolean shouldSleepTimeoutTaskContinue() {
+        return ensureState(NodeState.FOLLOWING) && context.isSleepTimeoutTaskOn();
+    }
+
     /**
      * acquire for leader information
      * <p>
@@ -519,8 +557,10 @@ public class NodeEngine implements Node {
 
         @Override
         public void run() {
-            if (ensureNotState(NodeState.FOLLOWING)) {
-                log.debug("The current node is not in FOLLOWING state, no need to execute SleepTimeoutTask");
+            if (!shouldSleepTimeoutTaskContinue()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Should NOT continue executing SleepTimeoutTask");
+                }
                 return;
             }
             SecureRandom random = new SecureRandom();
@@ -536,8 +576,8 @@ public class NodeEngine implements Node {
             try {
                 wLock.lock();
                 // double check node state
-                if (ensureNotState(NodeState.FOLLOWING)) {
-                    log.info("Sleeping timeout task interrupted, cause the state was changed in the middle of process.");
+                if (!shouldSleepTimeoutTaskContinue()) {
+                    log.info("Should NOT continue executing SleepTimeoutTask");
                     return;
                 }
                 termVal = term.incrementAndGet();
@@ -589,6 +629,7 @@ public class NodeEngine implements Node {
                 }
             }
             log.warn("PreVoteConfirmingTask timeout in {} ms", commonConfig.getPreVoteConfirmTimeout());
+            context.turnOnSleepTimeout();
         }
     }
 
@@ -633,6 +674,7 @@ public class NodeEngine implements Node {
                 }
             }
             log.warn("ElectionConfirmingTask timeout in {} ms", commonConfig.getElectConfirmTimeout());
+            context.turnOnSleepTimeout();
         }
     }
 

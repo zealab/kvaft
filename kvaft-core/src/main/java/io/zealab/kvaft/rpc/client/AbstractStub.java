@@ -35,4 +35,18 @@ public abstract class AbstractStub implements Stub {
         });
         return result;
     }
+
+    public <T extends Message> void doInvokeOneWay(Endpoint endpoint, T message, int soTimeout, int cTimeout) {
+        Client client = ClientFactory.getOrCreate(endpoint);
+        RequestId requestId = RequestId.create();
+        if (client == null) {
+            log.warn("could not get any client from this endpoint={}", endpoint);
+            return;
+        }
+        KvaftMessage<T> req = KvaftMessage.<T>builder()
+                .requestId(requestId.getValue())
+                .payload(message)
+                .build();
+        client.invokeOneWay(req, soTimeout, cTimeout);
+    }
 }

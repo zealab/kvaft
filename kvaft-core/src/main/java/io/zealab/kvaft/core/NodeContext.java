@@ -25,6 +25,11 @@ public class NodeContext {
      */
     private volatile boolean heartbeatOn = false;
 
+    /**
+     * is sleep timeout task on?
+     */
+    private volatile boolean sleepTimeoutTaskOn = false;
+
     public SignalQueue getPreVoteConfirmQueue() {
         return preVoteConfirmQueue;
     }
@@ -65,6 +70,7 @@ public class NodeContext {
      * is authorizable for this offer term
      *
      * @param offerTerm
+     *
      * @return
      */
     public boolean isAuthorizable(long offerTerm) {
@@ -85,5 +91,17 @@ public class NodeContext {
 
     public void turnOnHeartbeat() {
         this.heartbeatOn = true;
+    }
+
+    public void turnOnSleepTimeout() {
+        this.sleepTimeoutTaskOn = true;
+    }
+
+    public void turnOffSleepTimeout() {
+        this.sleepTimeoutTaskOn = false;
+    }
+
+    public boolean isSleepTimeoutTaskOn(){
+        return sleepTimeoutTaskOn;
     }
 }
