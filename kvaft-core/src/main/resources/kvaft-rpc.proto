@@ -47,3 +47,7 @@ message ElectResp {
     uint64 term = 1;
     bool authorized = 2;
 }
+
+message StepDownMsg {
+    uint64 term = 1;
+}

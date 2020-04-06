@@ -27,6 +27,7 @@ public interface Stub {
      * acquire leader information
      *
      * @param endpoint
+     *
      * @return
      */
     Future<RemoteCalls.AcquireLeaderResp> acquireLeader(Endpoint endpoint);
@@ -36,7 +37,16 @@ public interface Stub {
      *
      * @param endpoint
      * @param term
+     *
      * @return
      */
     Future<RemoteCalls.ElectResp> elect(Endpoint endpoint, long term);
+
+    /**
+     * Leader broadcasts step-down message after resetting leader operation
+     *
+     * @param endpoint
+     * @param term
+     */
+    void stepDown(Endpoint endpoint, long term);
 }
